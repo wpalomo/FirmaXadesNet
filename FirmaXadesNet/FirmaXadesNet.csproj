@@ -49,13 +49,13 @@
     <Compile Include="XMLUtil.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Library\Microsoft.Xades.csproj">
       <Project>{EE1DC57A-344A-4B0A-82CE-5FD328C14894}</Project>
       <Name>Microsoft.Xades</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
