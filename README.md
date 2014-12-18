@@ -1,7 +1,7 @@
 FirmaXadesNet
 =============
 
-INTRODUCCCIÓN
+INTRODUCCIÓN
 -------------
 FirmaXadesNet es una librería desarrollada en C# para la generación de firmas XADES realizada por el Dpto. de Nuevas Tecnologías de la Concejalía de Urbanismo del Ayuntamiento de Cartagena, la cual está basada en una modificación del XADES starter kit desarrollado por Microsoft Francia.
 
