@@ -166,9 +166,17 @@ namespace Microsoft.Xades
         private bool validationErrorOccurred;
         private string validationErrorDescription;
         private string signedInfoIdBuffer;
+        private XmlDocument signatureDocument;
+
         #endregion
 
         #region Public properties
+
+        public static string XmlDSigPrefix { get; set; }
+
+        public static string XmlXadesPrefix { get; set; }
+
+
         /// <summary>
         /// Property indicating the type of signature (XmlDsig or XAdES)
         /// </summary>
@@ -297,6 +305,9 @@ namespace Microsoft.Xades
         public XadesSignedXml()
             : base()
         {
+            XmlDSigPrefix = "ds";
+            XmlXadesPrefix = "xades";
+
             this.cachedXadesObjectDocument = null;
             this.signatureStandard = KnownSignatureStandard.XmlDsig;
         }
@@ -308,6 +319,9 @@ namespace Microsoft.Xades
         public XadesSignedXml(XmlElement signatureElement)
             : base(signatureElement)
         {
+            XmlDSigPrefix = "ds";
+            XmlXadesPrefix = "xades";
+
             this.cachedXadesObjectDocument = null;
         }
 
@@ -318,6 +332,10 @@ namespace Microsoft.Xades
         public XadesSignedXml(System.Xml.XmlDocument signatureDocument)
             : base(signatureDocument)
         {
+            XmlDSigPrefix = "ds";
+            XmlXadesPrefix = "xades";
+            this.signatureDocument = signatureDocument;
+
             this.cachedXadesObjectDocument = null;
         }
         #endregion
@@ -333,6 +351,23 @@ namespace Microsoft.Xades
             this.cachedXadesObjectDocument = null;
             this.signatureValueId = null;
             base.LoadXml(xmlElement);
+
+            // Get original prefix for namespaces
+            foreach (XmlAttribute attr in xmlElement.Attributes)
+            {
+                if (attr.Name.StartsWith("xmlns"))
+                {
+                    if (attr.Value.ToUpper() == XadesSignedXml.XadesNamespaceUri.ToUpper())
+                    {
+                        XmlXadesPrefix = attr.Name.Split(':')[1];
+                    }
+                    else if (attr.Value.ToUpper() == XadesSignedXml.XmlDsigNamespaceUrl.ToUpper())
+                    {
+                        XmlDSigPrefix = attr.Name.Split(':')[1];
+                    }
+                }
+            }
+
 
             XmlNode idAttribute = xmlElement.Attributes.GetNamedItem("Id");
             if (idAttribute != null)
@@ -381,7 +416,42 @@ namespace Microsoft.Xades
 
             retVal = base.GetXml();
 
-            retVal.SetAttribute("xmlns:xades", "http://uri.etsi.org/01903/v1.3.2#");
+            // Add "ds" namespace prefix to all XmlDsig nodes in the signature
+            SetPrefix(XmlDSigPrefix, retVal);
+
+            xmlNamespaceManager = new XmlNamespaceManager(retVal.OwnerDocument.NameTable);
+            xmlNamespaceManager.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
+
+
+            if (this.signatureDocument != null)
+            {
+                                
+                XmlNode nodeKeyInfoRetVal = retVal.SelectSingleNode("ds:KeyInfo", xmlNamespaceManager);
+                XmlNodeList nodeKeyInfoOrig = this.signatureDocument.DocumentElement.GetElementsByTagName("KeyInfo", SignedXml.XmlDsigNamespaceUrl);
+
+                if (nodeKeyInfoOrig.Count > 0)
+                {
+                    nodeKeyInfoRetVal.InnerXml = nodeKeyInfoOrig[0].InnerXml;
+                }
+
+                XmlNode nodeSignatureValue = retVal.SelectSingleNode("ds:SignatureValue", xmlNamespaceManager);
+                XmlNodeList nodeSignatureValueOrign = this.signatureDocument.DocumentElement.GetElementsByTagName("SignatureValue", SignedXml.XmlDsigNamespaceUrl);
+
+                if (nodeSignatureValueOrign.Count > 0)
+                {
+                    nodeSignatureValue.InnerXml = nodeSignatureValueOrign[0].InnerXml;
+                }
+
+                XmlNode nodeSignedInfo = retVal.SelectSingleNode("ds:SignedInfo", xmlNamespaceManager);
+                XmlNodeList nodeSignedInfoOrig = this.signatureDocument.DocumentElement.GetElementsByTagName("SignedInfo", SignedXml.XmlDsigNamespaceUrl);
+
+                if (nodeSignedInfoOrig.Count > 0)
+                {
+                    nodeSignedInfo.InnerXml = nodeSignedInfoOrig[0].InnerXml;
+                }
+            }
+
+            retVal.SetAttribute("xmlns:" + XmlXadesPrefix, XadesSignedXml.XadesNamespaceUri);
 
             if (this.signatureValueId != null && this.signatureValueId != "")
             { //Id on Signature value is needed for XAdES-T. We inject it here.
@@ -394,8 +464,6 @@ namespace Microsoft.Xades
                 }
             }
 
-            // Add "ds" namespace prefix to all XmlDsig nodes in the signature
-            SetPrefix("ds", retVal);
 
             return retVal;
         }
@@ -1402,7 +1470,7 @@ namespace Microsoft.Xades
             {
                 //refList.Add(obj2.GetXml());
                 XmlElement xml = obj2.GetXml();
-                SetPrefix("ds", xml); // <---
+                SetPrefix(XmlDSigPrefix, xml); // <---
 
 
                 CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xml });
@@ -1436,7 +1504,7 @@ namespace Microsoft.Xades
 
                     XmlElement xml = this.KeyInfo.GetXml();
                     XmlDocument doc = new XmlDocument();
-                    SetPrefix("ds", xml); // <---                   
+                    SetPrefix(XmlDSigPrefix, xml); // <---                   
 
                     doc.LoadXml(xml.OuterXml);
 
@@ -1471,7 +1539,7 @@ namespace Microsoft.Xades
                     foreach (DataObject obj2 in this.m_signature.ObjectList)
                     {
                         XmlElement element = obj2.GetXml();
-                        SetPrefix("ds", element);
+                        SetPrefix(XmlDSigPrefix, element);
 
                         XmlAttribute xadesNamespace = element.OwnerDocument.CreateAttribute("xmlns:xades");
                         xadesNamespace.Value = XadesSignedXml.XadesNamespaceUri;
@@ -1514,7 +1582,7 @@ namespace Microsoft.Xades
                 {
                     //refList.Add(reference2.GetXml());
                     XmlElement xml = reference2.GetXml();
-                    SetPrefix("ds", xml); // <---
+                    SetPrefix(XmlDSigPrefix, xml); // <---
                     CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xml });
                     //
                 }
@@ -1593,7 +1661,7 @@ namespace Microsoft.Xades
                         }
                     }
                 }
-                
+
 
                 //CanonicalXmlNodeList namespaces = (this.m_context == null) ? null : Utils.GetPropagatedAttributes(this.m_context);
                 FieldInfo SignedXml_m_context = SignedXml_Type.GetField("m_context", BindingFlags.NonPublic | BindingFlags.Instance);

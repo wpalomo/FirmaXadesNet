@@ -230,7 +230,7 @@ namespace Microsoft.Xades
 			XmlElement bufferXmlElement;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("xades", "DataObjectFormat", XadesSignedXml.XadesNamespaceUri);
+			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "DataObjectFormat", XadesSignedXml.XadesNamespaceUri);
 
 			if ((this.objectReferenceAttribute != null) && ((this.objectReferenceAttribute != "")))
 			{
@@ -255,14 +255,14 @@ namespace Microsoft.Xades
 
             if (!String.IsNullOrEmpty(this.mimeType))
 			{
-				bufferXmlElement = creationXmlDocument.CreateElement("xades", "MimeType", XadesSignedXml.XadesNamespaceUri);
+				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "MimeType", XadesSignedXml.XadesNamespaceUri);
 				bufferXmlElement.InnerText = this.mimeType;
 				retVal.AppendChild(bufferXmlElement);
 			}
 
             if (!String.IsNullOrEmpty(this.encoding))
 			{
-				bufferXmlElement = creationXmlDocument.CreateElement("xades", "Encoding", XadesSignedXml.XadesNamespaceUri);
+				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "Encoding", XadesSignedXml.XadesNamespaceUri);
 				bufferXmlElement.InnerText = this.encoding;
 				retVal.AppendChild(bufferXmlElement);
 			}

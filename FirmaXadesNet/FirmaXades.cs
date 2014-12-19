@@ -137,24 +137,20 @@ namespace FirmaXadesNet
                 if (_xmlDocument == null)
                 {
                     _xmlDocument = new XmlDocument();
-                }
-
-                XmlNodeList _xmlNodes = _xmlDocument.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
-                if (_xmlNodes.Count > 0)
-                {
-                    if (_xmlNodes[0] != _xmlDocument.DocumentElement)
-                    {
-                        _xmlDocument.DocumentElement.RemoveChild(_xmlNodes[0]);
-                    }
-                    else
-                    {
-                        _xmlDocument = new XmlDocument();
-                    }
-                }
+                }               
 
                 if (_xmlDocument.DocumentElement != null)
                 {
-                    _xmlDocument.DocumentElement.AppendChild(_xadesSignedXml.GetXml());
+                    XmlNodeList _xmlNodes = _xmlDocument.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
+
+                    if (_xmlNodes.Count == 1)
+                    {
+                        _xmlNodes[0].InnerXml = _xadesSignedXml.GetXml().InnerXml;
+                    }
+                    else
+                    {
+                        _xmlDocument.DocumentElement.AppendChild(_xadesSignedXml.GetXml());
+                    }                    
                 }
                 else
                 {

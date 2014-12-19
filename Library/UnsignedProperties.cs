@@ -173,7 +173,7 @@ namespace Microsoft.Xades
 
 			creationXmlDocument = new XmlDocument();
 			//retVal = creationXmlDocument.CreateElement("UnsignedProperties", XadesSignedXml.XadesNamespaceUri);
-            retVal = creationXmlDocument.CreateElement("xades", "UnsignedProperties", "http://uri.etsi.org/01903/v1.3.2#");
+            retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "UnsignedProperties", "http://uri.etsi.org/01903/v1.3.2#");
             if (!String.IsNullOrEmpty(this.id))
 			{
 				retVal.SetAttribute("Id", this.id);

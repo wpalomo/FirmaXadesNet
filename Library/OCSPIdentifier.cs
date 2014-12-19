@@ -181,7 +181,7 @@ namespace Microsoft.Xades
 			XmlElement bufferXmlElement;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("xades", "OCSPIdentifier", XadesSignedXml.XadesNamespaceUri);
+			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "OCSPIdentifier", XadesSignedXml.XadesNamespaceUri);
             retVal.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
 
             if (!string.IsNullOrEmpty(uriAttribute))
@@ -191,18 +191,18 @@ namespace Microsoft.Xades
 
 			if (!String.IsNullOrEmpty(this.responderID))
 			{
-				bufferXmlElement = creationXmlDocument.CreateElement("xades", "ResponderID", XadesSignedXml.XadesNamespaceUri);
+				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "ResponderID", XadesSignedXml.XadesNamespaceUri);
                 bufferXmlElement.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
 
                 XmlElement bufferXmlElement2 = null;
 
                 if (!ByKey && ResponderID.Contains(","))
                 {
-                    bufferXmlElement2 = creationXmlDocument.CreateElement("xades", "ByName", XadesSignedXml.XadesNamespaceUri);
+                    bufferXmlElement2 = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "ByName", XadesSignedXml.XadesNamespaceUri);
                 }
                 else
                 {
-                    bufferXmlElement2 = creationXmlDocument.CreateElement("xades", "ByKey", XadesSignedXml.XadesNamespaceUri);
+                    bufferXmlElement2 = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "ByKey", XadesSignedXml.XadesNamespaceUri);
                 }
 
                 bufferXmlElement2.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
@@ -215,7 +215,7 @@ namespace Microsoft.Xades
 
 			if (this.producedAt != DateTime.MinValue)
 			{
-				bufferXmlElement = creationXmlDocument.CreateElement("xades", "ProducedAt", XadesSignedXml.XadesNamespaceUri);
+				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "ProducedAt", XadesSignedXml.XadesNamespaceUri);
                 bufferXmlElement.InnerText = this.producedAt.ToString("s");
                 bufferXmlElement.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
 				retVal.AppendChild(bufferXmlElement);
