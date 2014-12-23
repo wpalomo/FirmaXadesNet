@@ -60,7 +60,7 @@ namespace FirmaXadesNet
         private string _policyHash;
         private string _tsaServer;
         private string _ocspServer;
-        
+
         private List<string> _certificatesChecked;
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace FirmaXadesNet
                 if (_xmlDocument == null)
                 {
                     _xmlDocument = new XmlDocument();
-                }               
+                }
 
                 if (_xmlDocument.DocumentElement != null)
                 {
@@ -150,7 +150,7 @@ namespace FirmaXadesNet
                     else
                     {
                         _xmlDocument.DocumentElement.AppendChild(_xadesSignedXml.GetXml());
-                    }                    
+                    }
                 }
                 else
                 {
@@ -161,7 +161,7 @@ namespace FirmaXadesNet
             }
         }
 
-        
+
         public FirmaXades()
         {
         }
@@ -169,33 +169,21 @@ namespace FirmaXadesNet
         /// <summary>
         /// Inserta un documento para generar una firma internally detached.
         /// </summary>
-        /// <param name="nombreFichero"></param>
+        /// <param name="contenido"></param>
         /// <param name="mimeType"></param>
-        public void InsertarDocumentoInternallyDetached(string nombreFichero, string mimeType)
+        public void InsertarDocumentoInternallyDetached(byte[] contenido, string mimeType)
         {
             _xmlDocument = new XmlDocument();
 
             XmlElement rootElement = _xmlDocument.CreateElement("AFIRMA");
             _xmlDocument.AppendChild(rootElement);
 
-            MemoryStream msContent = new MemoryStream();
-            FileStream fs = new FileStream(nombreFichero, FileMode.Open);
-            byte[] buffer = new byte[1024];
-            int readed = 0;
-
-            while ((readed = fs.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                msContent.Write(buffer, 0, readed);
-            }
-            fs.Close();
-
             string id = "CONTENT-" + Guid.NewGuid().ToString();
 
             XmlElement contentElement = _xmlDocument.CreateElement("CONTENT");
             contentElement.SetAttribute("Encoding", "http://www.w3.org/2000/09/xmldsig#base64");
             contentElement.SetAttribute("Id", id);
-            contentElement.InnerText = Convert.ToBase64String(msContent.ToArray());
-            msContent.Dispose();
+            contentElement.InnerText = Convert.ToBase64String(contenido);
 
             rootElement.AppendChild(contentElement);
 
@@ -213,6 +201,31 @@ namespace FirmaXadesNet
             reference.AddTransform(transform);
 
             _xadesSignedXml.AddReference(reference);
+
+        }
+
+
+        /// <summary>
+        /// Inserta un documento para generar una firma internally detached.
+        /// </summary>
+        /// <param name="nombreFichero"></param>
+        /// <param name="mimeType"></param>
+        public void InsertarDocumentoInternallyDetached(string nombreFichero, string mimeType)
+        {
+            using (MemoryStream msContent = new MemoryStream())
+            {
+                FileStream fs = new FileStream(nombreFichero, FileMode.Open);
+                byte[] buffer = new byte[1024];
+                int readed = 0;
+
+                while ((readed = fs.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    msContent.Write(buffer, 0, readed);
+                }
+                fs.Close();
+
+                InsertarDocumentoInternallyDetached(msContent.ToArray(), mimeType);
+            }
         }
 
         /// <summary>
@@ -243,13 +256,35 @@ namespace FirmaXadesNet
         /// Inserta un documento XML para generar una firma enveloped.
         /// </summary>
         /// <param name="nombreFicheroXML"></param>
-        public void InsertarDocumentoEnveloped(string nombreFicheroXML)
+        public void InsertarFicheroEnveloped(string nombreFicheroXML)
         {
-            Reference reference = new Reference();
-
             _xmlDocument = new XmlDocument();
             _xmlDocument.PreserveWhitespace = true;
             _xmlDocument.Load(nombreFicheroXML);
+
+            CrearDocumentoEnveloped();
+        }
+
+        /// <summary>
+        /// Inserta un contenido XML para generar una firma enveloped.
+        /// </summary>
+        /// <param name="contenidoXML"></param>
+        public void InsertarContenidoEnveloped(string contenidoXML)
+        {
+            _xmlDocument = new XmlDocument();
+            _xmlDocument.PreserveWhitespace = true;
+            _xmlDocument.LoadXml(contenidoXML);
+
+            CrearDocumentoEnveloped();
+        }
+
+        /// <summary>
+        /// Construye el documento enveloped
+        /// </summary>
+        private void CrearDocumentoEnveloped()
+        {
+            Reference reference = new Reference();
+
             _xadesSignedXml = new XadesSignedXml(_xmlDocument);
 
             reference.Id = "Reference-" + Guid.NewGuid().ToString();
@@ -263,7 +298,6 @@ namespace FirmaXadesNet
             _xadesSignedXml.AddReference(reference);
         }
 
-
         /// <summary>
         /// Inserta un contenido XML para generar una firma enveloping.
         /// </summary>
@@ -271,7 +305,6 @@ namespace FirmaXadesNet
         public void InsertarDocumentoEnveloping(string contenidoXML)
         {
             Reference reference = new Reference();
-
 
             XmlDocument doc = new XmlDocument();
             doc.PreserveWhitespace = true;
@@ -298,12 +331,29 @@ namespace FirmaXadesNet
         /// <summary>
         /// Realiza el proceso de firmado
         /// </summary>
-        public void Firmar()
+        public void Firmar(X509Certificate2 certificadoFirma)
         {
+            if (certificadoFirma == null)
+            {
+                throw new Exception("Es necesario un certificado válido para la firma.");
+            }
+            
             _signatureId = "Signature-" + Guid.NewGuid().ToString();
             _signatureValueId = "SignatureValue-" + Guid.NewGuid().ToString();
-            
-            SeleccionarCertificado();
+
+            _certificate = certificadoFirma;
+            _chain = new X509Chain();
+
+            _chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain;
+            _chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            _chain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 30);
+            _chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+
+            if (!_chain.Build(_certificate))
+            {
+                throw new Exception("No se he podido verificar la cadena del certificado.");
+            }
+
             InsertarInfoCertificado();
             InsertarInfoXades(_mimeType);
             ComputarFirma();
@@ -333,13 +383,13 @@ namespace FirmaXadesNet
             _xmlDocument.PreserveWhitespace = true;
             _xmlDocument.Load(nombreFichero);
 
-            _xadesSignedXml = new XadesSignedXml(_xmlDocument); 
+            _xadesSignedXml = new XadesSignedXml(_xmlDocument);
             XmlNodeList signatureNodeList = _xmlDocument.GetElementsByTagName("Signature");
             if (signatureNodeList.Count == 0)
             {
                 signatureNodeList = _xmlDocument.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
             }
-            
+
             _xadesSignedXml.LoadXml((XmlElement)signatureNodeList[0]);
 
             XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().ChildNodes[0];
@@ -350,7 +400,11 @@ namespace FirmaXadesNet
             _chain.Build(_certificate);
         }
 
-        private X509Certificate2 UsuarioSelCertificado()
+        /// <summary>
+        /// Selecciona un certificado del almacén de certificados
+        /// </summary>
+        /// <returns></returns>
+        public X509Certificate2 SeleccionarCertificado()
         {
             X509Certificate2 cert = null;
 
@@ -384,25 +438,6 @@ namespace FirmaXadesNet
             return cert;
         }
 
-        private void SeleccionarCertificado()
-        {
-            _certificate = UsuarioSelCertificado();
-            if (_certificate != null)
-            {
-                _chain = new X509Chain();
-
-                _chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain;
-                _chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                _chain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 30);
-                _chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
-
-                if (!_chain.Build(_certificate))
-                {
-                    throw new Exception("No se he podido verificar la cadena del certificado.");
-                }
-            }
-
-        }
 
         private void InsertarInfoXades(string mimeType)
         {
@@ -450,13 +485,13 @@ namespace FirmaXadesNet
             xmlDocument = new XmlDocument();
 
             cert = new Cert();
-            cert.IssuerSerial.X509IssuerName = NormalizarNombre(_certificate.IssuerName.Name);            
+            cert.IssuerSerial.X509IssuerName = NormalizarNombre(_certificate.IssuerName.Name);
             cert.IssuerSerial.X509SerialNumber = HexToDecimal(_certificate.SerialNumber);
             cert.CertDigest.DigestMethod.Algorithm = SignedXml.XmlDsigSHA1Url;
             cert.CertDigest.DigestValue = _certificate.GetCertHash();
             signedSignatureProperties.SigningCertificate.CertCollection.Add(cert);
 
-            if (!string.IsNullOrEmpty(_policyUri)) 
+            if (!string.IsNullOrEmpty(_policyUri))
             {
                 signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyImplied = false;
                 signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyId.Identifier.IdentifierUri = _policyUri;
@@ -466,7 +501,7 @@ namespace FirmaXadesNet
                 signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyHash.DigestValue = Convert.FromBase64String(PolicyHash);
             }
 
-            signedSignatureProperties.SigningTime = DateTime.Now; 
+            signedSignatureProperties.SigningTime = DateTime.Now;
 
             if (!string.IsNullOrEmpty(mimeType))
             {
@@ -518,7 +553,7 @@ namespace FirmaXadesNet
 
                 UnsignedProperties unsignedProperties = _xadesSignedXml.UnsignedProperties;
                 unsignedProperties.UnsignedSignatureProperties.SignatureTimeStampCollection.Add(signatureTimeStamp);
-                
+
                 _xadesSignedXml.UnsignedProperties = unsignedProperties;
             }
             catch (Exception ex)
@@ -578,7 +613,7 @@ namespace FirmaXadesNet
 
         private string HexToDecimal(string hex)
         {
-            List<int> dec = new List<int> { 0 };   
+            List<int> dec = new List<int> { 0 };
 
             foreach (char c in hex)
             {
@@ -606,7 +641,7 @@ namespace FirmaXadesNet
         private string ObtenerResponderName(ResponderID responderId, ref bool byKey)
         {
             Org.BouncyCastle.Asn1.DerTaggedObject dt = (Org.BouncyCastle.Asn1.DerTaggedObject)responderId.ToAsn1Object();
-            
+
 
             if (dt.TagNo == 1)
             {
@@ -696,7 +731,7 @@ namespace FirmaXadesNet
         private Org.BouncyCastle.X509.X509Certificate[] ComprobarCertificado(UnsignedProperties unsignedProperties, X509Certificate2 client, X509Certificate2 issuer)
         {
             bool byKey = false;
-            SHA1Managed sha1Managed = new SHA1Managed();           
+            SHA1Managed sha1Managed = new SHA1Managed();
 
             Org.BouncyCastle.X509.X509Certificate clientCert = new Org.BouncyCastle.X509.X509CertificateParser().ReadCertificate(client.RawData);
             Org.BouncyCastle.X509.X509Certificate issuerCert = new Org.BouncyCastle.X509.X509CertificateParser().ReadCertificate(issuer.RawData);
@@ -747,13 +782,13 @@ namespace FirmaXadesNet
                 ocspRef.OCSPIdentifier.ByKey = true;
             }
 
-            ocspRef.OCSPIdentifier.ProducedAt = or.ProducedAt; 
+            ocspRef.OCSPIdentifier.ProducedAt = or.ProducedAt;
             unsignedProperties.UnsignedSignatureProperties.CompleteRevocationRefs.OCSPRefs.OCSPRefCollection.Add(ocspRef);
 
             OCSPValue ocspValue = new OCSPValue();
             ocspValue.PkiData = rEncoded;
             ocspValue.Id = "OcspValue" + guidOcsp;
-            unsignedProperties.UnsignedSignatureProperties.RevocationValues.OCSPValues.OCSPValueCollection.Add(ocspValue);            
+            unsignedProperties.UnsignedSignatureProperties.RevocationValues.OCSPValues.OCSPValueCollection.Add(ocspValue);
 
             CertificateStatus status = ocsp.ProcessOcspResponse(clientCert, issuerCert, resp);
 

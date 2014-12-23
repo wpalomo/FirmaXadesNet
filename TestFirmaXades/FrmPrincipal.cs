@@ -73,10 +73,10 @@ namespace TestFirmaXades
             }
             else if (rbEnveloped.Checked)
             {
-                _firmaXades.InsertarDocumentoEnveloped(txtFichero.Text);
+                _firmaXades.InsertarFicheroEnveloped(txtFichero.Text);
             }
 
-            _firmaXades.Firmar();
+            _firmaXades.Firmar(_firmaXades.SeleccionarCertificado());
 
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES", 
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
