@@ -290,6 +290,15 @@ namespace FirmaXadesNet
             reference.Id = "Reference-" + Guid.NewGuid().ToString();
             reference.Uri = "";
 
+            for (int i = 0; i < _xmlDocument.DocumentElement.Attributes.Count; i++)
+            {
+                if (_xmlDocument.DocumentElement.Attributes[i].Name.Equals("id", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    reference.Uri = "#" + _xmlDocument.DocumentElement.Attributes[i].Value;
+                    break;
+                }
+            }
+
             XmlDsigEnvelopedSignatureTransform xmlDsigEnvelopedSignatureTransform = new XmlDsigEnvelopedSignatureTransform();
             reference.AddTransform(xmlDsigEnvelopedSignatureTransform);
 
