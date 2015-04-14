@@ -255,7 +255,7 @@ namespace Microsoft.Xades
 				this.signingTime = DateTime.Now;
 			}
 			bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "SigningTime", XadesSignedXml.XadesNamespaceUri);
-			bufferXmlElement.InnerText = Convert.ToString(this.signingTime.ToString("s")) + "+01:00"; //ISO 8601 format as required in http://www.w3.org/TR/xmlschema-2/#dateTime 
+            bufferXmlElement.InnerText = Convert.ToString(this.signingTime.ToUniversalTime().ToString("s")); // ISO 8601 format as required in http://www.w3.org/TR/xmlschema-2/#dateTime 
 			retVal.AppendChild(bufferXmlElement);
 
 			if (this.signingCertificate != null && this.signingCertificate.HasChanged())
