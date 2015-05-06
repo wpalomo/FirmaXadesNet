@@ -60,7 +60,7 @@ namespace FirmaXadesNet
         private string _policyHash;
         private string _tsaServer;
         private string _ocspServer;
-
+        
         private List<string> _certificatesChecked;
 
         /// <summary>
@@ -346,7 +346,7 @@ namespace FirmaXadesNet
             {
                 throw new Exception("Es necesario un certificado válido para la firma.");
             }
-            
+
             _signatureId = "Signature-" + Guid.NewGuid().ToString();
             _signatureValueId = "SignatureValue-" + Guid.NewGuid().ToString();
 
@@ -673,15 +673,30 @@ namespace FirmaXadesNet
             }
         }
 
+
+        private void AddCertificates(X509Certificate2[] certs)
+        {
+            foreach (var cert in certs)
+            {
+                if (!_chain.ChainPolicy.ExtraStore.Contains(cert))
+                {
+                    _chain.ChainPolicy.ExtraStore.Add(cert);
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+
         /// <summary>
         /// Inserta en la lista de certificados el certificado y comprueba la valided del certificado.
         /// </summary>
         /// <param name="cert"></param>
         /// <param name="unsignedProperties"></param>
         /// <param name="addCertValue"></param>
-        private void InsertarCertificado(X509Certificate2 cert, UnsignedProperties unsignedProperties, bool addCertValue)
+        private void InsertarCertificado(X509Certificate2 cert, UnsignedProperties unsignedProperties, bool addCert)
         {
-            X509Chain chain = new X509Chain();
             SHA1Managed sha1Managed = new SHA1Managed();
             string digest = Convert.ToBase64String(sha1Managed.ComputeHash(cert.RawData));
 
@@ -690,7 +705,7 @@ namespace FirmaXadesNet
                 return;
             }
 
-            if (addCertValue)
+            if (addCert)
             {
                 string guidCert = Guid.NewGuid().ToString();
 
@@ -708,21 +723,25 @@ namespace FirmaXadesNet
                 unsignedProperties.UnsignedSignatureProperties.CertificateValues.EncapsulatedX509CertificateCollection.Add(encapsulatedX509Certificate);
             }
 
-            chain.Build(cert);
+            _chain.Build(cert);
 
-            if (chain.ChainElements.Count > 1)
+            var chains = _chain.ChainElements;
+
+            if (chains.Count > 1)
             {
-                X509ChainElementEnumerator enumerator = chain.ChainElements.GetEnumerator();
+                X509ChainElementEnumerator enumerator = chains.GetEnumerator();
                 enumerator.MoveNext(); // el mismo certificado que el pasado por parametro
 
                 enumerator.MoveNext();
 
-                var certs = ComprobarCertificado(unsignedProperties, cert, enumerator.Current.Certificate);
+                var ocspCerts = ComprobarCertificado(unsignedProperties, cert, enumerator.Current.Certificate);
 
                 _certificatesChecked.Add(digest);
 
-                // Comprueba los certificados del OCSP
-                foreach (var certOcsp in certs)
+                AddCertificates((from certOcsp in ocspCerts
+                                 select new X509Certificate2(certOcsp.GetEncoded())).ToArray());
+
+                foreach (var certOcsp in ocspCerts)
                 {
                     InsertarCertificado(new X509Certificate2(certOcsp.GetEncoded()), unsignedProperties, true);
                 }
@@ -735,6 +754,7 @@ namespace FirmaXadesNet
             }
 
         }
+
 
 
         private Org.BouncyCastle.X509.X509Certificate[] ComprobarCertificado(UnsignedProperties unsignedProperties, X509Certificate2 client, X509Certificate2 issuer)
@@ -817,17 +837,27 @@ namespace FirmaXadesNet
         private void InsertarCertificadosTSA(UnsignedProperties unsignedProperties)
         {
             TimeStampToken token = new TimeStampToken(new Org.BouncyCastle.Cms.CmsSignedData(unsignedProperties.UnsignedSignatureProperties.SignatureTimeStampCollection[0].EncapsulatedTimeStamp.PkiData));
-            IX509Store certs = token.GetCertificates("Collection");
+            IX509Store store = token.GetCertificates("Collection");
 
             Org.BouncyCastle.Cms.SignerID signerId = token.SignerID;
 
-            foreach (var item in certs.GetMatches(null))
+            var tsaCerts = store.GetMatches(null);
+
+            List<X509Certificate2> certs = new List<X509Certificate2>();
+
+            foreach (var item in tsaCerts)
             {
                 Org.BouncyCastle.X509.X509Certificate cert = (Org.BouncyCastle.X509.X509Certificate)item;
 
-                InsertarCertificado(new X509Certificate2(cert.GetEncoded()), unsignedProperties, true);
+                certs.Add(new X509Certificate2(cert.GetEncoded()));
             }
 
+            AddCertificates(certs.ToArray());
+
+            foreach (var item in certs)
+            {
+                InsertarCertificado(item, unsignedProperties, true);
+            }
         }
 
         /// <summary>
@@ -861,10 +891,10 @@ namespace FirmaXadesNet
                 _certificatesChecked.Clear();
             }
 
+
             foreach (X509ChainElement element in _chain.ChainElements)
             {
                 // el certificado de firma no se incluye en la lista de certificados, pero sí se valida.
-
                 bool addCertValue = element.Certificate.SerialNumber != _certificate.SerialNumber;
 
                 InsertarCertificado(element.Certificate, unsignedProperties, addCertValue);
