@@ -749,8 +749,18 @@ namespace FirmaXadesNet
                 InsertarCertificado(enumerator.Current.Certificate, unsignedProperties, true);
             }
             else
-            {
+            {                
+                var ocspCerts = ComprobarCertificado(unsignedProperties, cert, cert);
+
                 _certificatesChecked.Add(digest);
+
+                AddCertificates((from certOcsp in ocspCerts
+                                 select new X509Certificate2(certOcsp.GetEncoded())).ToArray());
+
+                foreach (var certOcsp in ocspCerts)
+                {
+                    InsertarCertificado(new X509Certificate2(certOcsp.GetEncoded()), unsignedProperties, true);
+                }
             }
 
         }
