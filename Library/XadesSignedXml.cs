@@ -423,7 +423,7 @@ namespace Microsoft.Xades
             xmlNamespaceManager.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
 
-            if (this.signatureDocument != null)
+            /*if (this.signatureDocument != null)
             {
                                 
                 XmlNode nodeKeyInfoRetVal = retVal.SelectSingleNode("ds:KeyInfo", xmlNamespaceManager);
@@ -449,7 +449,7 @@ namespace Microsoft.Xades
                 {
                     nodeSignedInfo.InnerXml = nodeSignedInfoOrig[0].InnerXml;
                 }
-            }
+            }*/
 
             retVal.SetAttribute("xmlns:" + XmlXadesPrefix, XadesSignedXml.XadesNamespaceUri);
 
@@ -545,7 +545,7 @@ namespace Microsoft.Xades
                 dataObject = new DataObject();
                 dataObject.Id = xadesObject.Id;
                 dataObject.Data = xadesObject.GetXml().ChildNodes;
-                this.AddObject(dataObject); //Add the XAdES object
+                this.AddObject(dataObject); //Add the XAdES object                            
 
                 reference = new Reference();
                 signedPropertiesIdBuffer = xadesObject.QualifyingProperties.SignedProperties.Id;
@@ -1483,6 +1483,8 @@ namespace Microsoft.Xades
             MethodInfo Reference_UpdateHashValue = Reference_Type.GetMethod("UpdateHashValue", BindingFlags.NonPublic | BindingFlags.Instance);
             //
 
+            object m_containingDocument = SignedXml_m_containingDocument.GetValue(this);
+
             foreach (Reference reference2 in list2)
             {
                 if (reference2.DigestMethod == null)
@@ -1496,10 +1498,8 @@ namespace Microsoft.Xades
                 }
 
                 //reference2.UpdateHashValue(this.m_containingDocument, refList);
-                object m_containingDocument = SignedXml_m_containingDocument.GetValue(this);
-
-
-                if (reference2.Uri == "#KeyInfoId")
+                
+                if (reference2.Uri.StartsWith("#KeyInfoId-"))
                 {
 
                     XmlElement xml = this.KeyInfo.GetXml();
@@ -1532,7 +1532,7 @@ namespace Microsoft.Xades
                     Reference_UpdateHashValue.Invoke(reference2, new object[] { doc, refList });
 
                 }
-                else if (reference2.Uri == "#SignedPropertiesId" ||
+                else if (reference2.Uri.StartsWith("#SignedProperties-") ||
                     reference2.Uri.Contains("DataObject"))
                 {
                     string xml = "";
@@ -1574,7 +1574,6 @@ namespace Microsoft.Xades
                 else
                 {
                     Reference_UpdateHashValue.Invoke(reference2, new object[] { m_containingDocument, refList });
-
                 }
 
 

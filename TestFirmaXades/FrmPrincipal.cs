@@ -53,6 +53,11 @@ namespace TestFirmaXades
 
         private void btnFirmar_Click(object sender, EventArgs e)
         {
+
+            _firmaXades.PolicyIdentifier = txtIdentificadorPolitica.Text;
+            _firmaXades.PolicyHash = txtHashPolitica.Text;
+            _firmaXades.PolicyUri = txtURIPolitica.Text;
+
             if (string.IsNullOrEmpty(txtFichero.Text))
             {
                 MessageBox.Show("Debe seleccionar un fichero para firmar.");
@@ -79,6 +84,19 @@ namespace TestFirmaXades
             _firmaXades.Firmar(_firmaXades.SeleccionarCertificado());
 
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+
+        private void btnCoFirmar_Click(object sender, EventArgs e)
+        {
+            _firmaXades.PolicyIdentifier = txtIdentificadorPolitica.Text;
+            _firmaXades.PolicyHash = txtHashPolitica.Text;
+            _firmaXades.PolicyUri = txtURIPolitica.Text;
+
+            _firmaXades.CoFirmar(_firmaXades.SeleccionarCertificado());
+
+            MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -143,6 +161,5 @@ namespace TestFirmaXades
                 MessageBox.Show("Firma cargada correctamente.");
             }
         }
-
     }
 }

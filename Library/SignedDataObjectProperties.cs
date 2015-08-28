@@ -189,7 +189,7 @@ namespace Microsoft.Xades
 				}
 			}
 
-			this.dataObjectFormatCollection.Clear();
+			//this.dataObjectFormatCollection.Clear();
 			xmlNodeList = xmlElement.SelectNodes("xsd:CommitmentTypeIndication", xmlNamespaceManager);
 			enumerator = xmlNodeList.GetEnumerator();
 			try 
@@ -214,7 +214,7 @@ namespace Microsoft.Xades
 				}
 			}
 
-			this.dataObjectFormatCollection.Clear();
+			//this.dataObjectFormatCollection.Clear();
 			xmlNodeList = xmlElement.SelectNodes("xsd:AllDataObjectsTimeStamp", xmlNamespaceManager);
 			enumerator = xmlNodeList.GetEnumerator();
 			try 
@@ -239,7 +239,7 @@ namespace Microsoft.Xades
 				}
 			}
 
-			this.dataObjectFormatCollection.Clear();
+			//this.dataObjectFormatCollection.Clear();
 			xmlNodeList = xmlElement.SelectNodes("xsd:IndividualDataObjectsTimeStamp", xmlNamespaceManager);
 			enumerator = xmlNodeList.GetEnumerator();
 			try 

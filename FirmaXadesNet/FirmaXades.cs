@@ -56,11 +56,12 @@ namespace FirmaXadesNet
         private string _signatureId;
         private string _signatureValueId;
         private string _objectReference;
+        private string _policyIdentifier;
         private string _policyUri;
         private string _policyHash;
         private string _tsaServer;
         private string _ocspServer;
-        
+
         private List<string> _certificatesChecked;
 
         /// <summary>
@@ -97,18 +98,18 @@ namespace FirmaXadesNet
         }
 
         /// <summary>
-        /// Establece la URI de la politica de firma
+        /// Establece el identificador de la política de firma
         /// </summary>
-        public string PolicyUri
+        public string PolicyIdentifier
         {
             get
             {
-                return _policyUri;
+                return _policyIdentifier;
             }
 
             set
             {
-                _policyUri = value;
+                _policyIdentifier = value;
             }
         }
 
@@ -127,6 +128,24 @@ namespace FirmaXadesNet
             }
         }
 
+
+        /// <summary>
+        /// Establece la URI de la politica de firma
+        /// </summary>
+        public string PolicyUri
+        {
+            get
+            {
+                return _policyUri;
+            }
+
+            set
+            {
+                _policyUri = value;
+            }
+
+        }
+
         /// <summary>
         /// Devuelve el resultado de la firma.
         /// </summary>
@@ -134,29 +153,6 @@ namespace FirmaXadesNet
         {
             get
             {
-                if (_xmlDocument == null)
-                {
-                    _xmlDocument = new XmlDocument();
-                }
-
-                if (_xmlDocument.DocumentElement != null)
-                {
-                    XmlNodeList _xmlNodes = _xmlDocument.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
-
-                    if (_xmlNodes.Count == 1)
-                    {
-                        _xmlNodes[0].InnerXml = _xadesSignedXml.GetXml().InnerXml;
-                    }
-                    else
-                    {
-                        _xmlDocument.DocumentElement.AppendChild(_xadesSignedXml.GetXml());
-                    }
-                }
-                else
-                {
-                    _xmlDocument.LoadXml(_xadesSignedXml.GetXml().OuterXml);
-                }
-
                 return _xmlDocument;
             }
         }
@@ -239,7 +235,7 @@ namespace FirmaXadesNet
             _xmlDocument = new XmlDocument();
             _xadesSignedXml = new XadesSignedXml();
 
-            reference.Uri = "file:///" + nombreFichero.Replace("\\", "/");
+            reference.Uri = "file://" + nombreFichero.Replace("\\", "/");
             reference.Id = "Reference-" + Guid.NewGuid().ToString();
             if (reference.Uri.EndsWith(".xml") || reference.Uri.EndsWith(".XML"))
             {
@@ -366,6 +362,71 @@ namespace FirmaXadesNet
             InsertarInfoCertificado();
             InsertarInfoXades(_mimeType);
             ComputarFirma();
+
+            if (_xmlDocument == null)
+            {
+                _xmlDocument = new XmlDocument();
+            }
+
+            if (_xmlDocument.DocumentElement != null)
+            {
+                XmlNode _xmlNode = _xmlDocument.SelectSingleNode("//*[@Id='" + _xadesSignedXml.Signature.Id + "']");
+
+                if (_xmlNode != null)
+                {
+                    _xmlNode.InnerXml = _xadesSignedXml.GetXml().InnerXml;
+                }
+                else
+                {
+                    _xmlDocument.DocumentElement.AppendChild(_xadesSignedXml.GetXml());
+                }
+            }
+            else
+            {
+                _xmlDocument.LoadXml(_xadesSignedXml.GetXml().OuterXml);
+            }
+        }
+
+
+        public void CoFirmar(X509Certificate2 certificadoFirma)
+        {
+            if (_xadesSignedXml == null)
+            {
+                throw new Exception("No hay ninguna firma XADES creada previamente.");
+            }
+
+            if (certificadoFirma == null)
+            {
+                throw new Exception("Es necesario un certificado válido para la firma.");
+            }
+
+            Reference refContenido = _xadesSignedXml.SignedInfo.References[0] as Reference;
+
+            if (refContenido == null)
+            {
+                throw new Exception("No se ha podido encontrar la referencia del contenido firmado.");
+            }
+
+            if (_xadesSignedXml.XadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties.DataObjectFormatCollection.Count > 0)
+            {
+                foreach (DataObjectFormat dof in _xadesSignedXml.XadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties.DataObjectFormatCollection)
+                {
+                    if (dof.ObjectReferenceAttribute == ("#" + refContenido.Id))
+                    {
+                        _mimeType = dof.MimeType;
+                        break;
+                    }
+                }
+            }
+
+            _xadesSignedXml = new XadesSignedXml(_xmlDocument);
+
+            refContenido.Id = "Reference-" + Guid.NewGuid().ToString();
+            _xadesSignedXml.AddReference(refContenido);
+
+            _objectReference = refContenido.Id;
+
+            Firmar(certificadoFirma);
         }
 
         /// <summary>
@@ -401,7 +462,7 @@ namespace FirmaXadesNet
 
             _xadesSignedXml.LoadXml((XmlElement)signatureNodeList[0]);
 
-            XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().ChildNodes[0];
+            XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Data", SignedXml.XmlDsigNamespaceUrl)[0];
 
             _certificate = new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
 
@@ -455,6 +516,8 @@ namespace FirmaXadesNet
             xadesObject.Id = "XadesObjectId-" + Guid.NewGuid().ToString();
             xadesObject.QualifyingProperties.Id = "QualifyingProperties-" + Guid.NewGuid().ToString();
             xadesObject.QualifyingProperties.Target = "#" + _signatureId;
+            xadesObject.QualifyingProperties.SignedProperties.Id = "SignedProperties-" + _signatureId;
+
             InsertarPropiedadesFirma(
                 xadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties,
                 xadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties,
@@ -470,7 +533,7 @@ namespace FirmaXadesNet
             _xadesSignedXml.SigningKey = rsaKey;
 
             KeyInfo keyInfo = new KeyInfo();
-            keyInfo.Id = "KeyInfoId";
+            keyInfo.Id = "KeyInfoId-" + _signatureId;
             keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)_certificate));
             keyInfo.AddClause(new RSAKeyValue(rsaKey));
 
@@ -479,7 +542,7 @@ namespace FirmaXadesNet
             Reference reference = new Reference();
 
             reference.Id = "ReferenceKeyInfo";
-            reference.Uri = "#KeyInfoId";
+            reference.Uri = "#KeyInfoId-" + _signatureId;
 
             _xadesSignedXml.AddReference(reference);
         }
@@ -500,12 +563,23 @@ namespace FirmaXadesNet
             cert.CertDigest.DigestValue = _certificate.GetCertHash();
             signedSignatureProperties.SigningCertificate.CertCollection.Add(cert);
 
-            if (!string.IsNullOrEmpty(_policyUri))
+            if (!string.IsNullOrEmpty(_policyIdentifier))
             {
                 signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyImplied = false;
-                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyId.Identifier.IdentifierUri = _policyUri;
+                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyId.Identifier.IdentifierUri = _policyIdentifier;
+            }
 
+            if (!string.IsNullOrEmpty(_policyUri))
+            {
+                SigPolicyQualifier spq = new SigPolicyQualifier();
+                spq.AnyXmlElement = xmlDocument.CreateElement("SPURI", XadesSignedXml.XadesNamespaceUri);
+                spq.AnyXmlElement.InnerText = _policyUri;
 
+                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyQualifiers.SigPolicyQualifierCollection.Add(spq);
+            }
+
+            if (!string.IsNullOrEmpty(_policyHash))
+            {
                 signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyHash.DigestMethod.Algorithm = SignedXml.XmlDsigSHA1Url;
                 signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyHash.DigestValue = Convert.FromBase64String(PolicyHash);
             }
@@ -749,7 +823,7 @@ namespace FirmaXadesNet
                 InsertarCertificado(enumerator.Current.Certificate, unsignedProperties, true);
             }
             else
-            {                
+            {
                 var ocspCerts = ComprobarCertificado(unsignedProperties, cert, cert);
 
                 _certificatesChecked.Add(digest);

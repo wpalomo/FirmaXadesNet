@@ -46,12 +46,19 @@
             this.btnXadesXL = new System.Windows.Forms.Button();
             this.btnGuardarFirma = new System.Windows.Forms.Button();
             this.btnCargarFirma = new System.Windows.Forms.Button();
+            this.btnCoFirmar = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.txtIdentificadorPolitica = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.txtHashPolitica = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtURIPolitica = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnFirmar
             // 
-            this.btnFirmar.Location = new System.Drawing.Point(12, 308);
+            this.btnFirmar.Location = new System.Drawing.Point(12, 370);
             this.btnFirmar.Name = "btnFirmar";
             this.btnFirmar.Size = new System.Drawing.Size(75, 23);
             this.btnFirmar.TabIndex = 0;
@@ -172,7 +179,7 @@
             // 
             // btnXadesT
             // 
-            this.btnXadesT.Location = new System.Drawing.Point(101, 308);
+            this.btnXadesT.Location = new System.Drawing.Point(210, 370);
             this.btnXadesT.Name = "btnXadesT";
             this.btnXadesT.Size = new System.Drawing.Size(144, 23);
             this.btnXadesT.TabIndex = 6;
@@ -182,7 +189,7 @@
             // 
             // btnXadesXL
             // 
-            this.btnXadesXL.Location = new System.Drawing.Point(259, 308);
+            this.btnXadesXL.Location = new System.Drawing.Point(366, 370);
             this.btnXadesXL.Name = "btnXadesXL";
             this.btnXadesXL.Size = new System.Drawing.Size(134, 23);
             this.btnXadesXL.TabIndex = 7;
@@ -192,7 +199,7 @@
             // 
             // btnGuardarFirma
             // 
-            this.btnGuardarFirma.Location = new System.Drawing.Point(516, 307);
+            this.btnGuardarFirma.Location = new System.Drawing.Point(516, 369);
             this.btnGuardarFirma.Name = "btnGuardarFirma";
             this.btnGuardarFirma.Size = new System.Drawing.Size(97, 23);
             this.btnGuardarFirma.TabIndex = 8;
@@ -202,7 +209,7 @@
             // 
             // btnCargarFirma
             // 
-            this.btnCargarFirma.Location = new System.Drawing.Point(516, 263);
+            this.btnCargarFirma.Location = new System.Drawing.Point(516, 325);
             this.btnCargarFirma.Name = "btnCargarFirma";
             this.btnCargarFirma.Size = new System.Drawing.Size(97, 23);
             this.btnCargarFirma.TabIndex = 9;
@@ -210,11 +217,80 @@
             this.btnCargarFirma.UseVisualStyleBackColor = true;
             this.btnCargarFirma.Click += new System.EventHandler(this.btnCargarFirma_Click);
             // 
+            // btnCoFirmar
+            // 
+            this.btnCoFirmar.Location = new System.Drawing.Point(93, 370);
+            this.btnCoFirmar.Name = "btnCoFirmar";
+            this.btnCoFirmar.Size = new System.Drawing.Size(75, 23);
+            this.btnCoFirmar.TabIndex = 10;
+            this.btnCoFirmar.Text = "Co-Firmar";
+            this.btnCoFirmar.UseVisualStyleBackColor = true;
+            this.btnCoFirmar.Click += new System.EventHandler(this.btnCoFirmar_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(13, 251);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(158, 13);
+            this.label4.TabIndex = 11;
+            this.label4.Text = "Identificador de política de firma";
+            // 
+            // txtIdentificadorPolitica
+            // 
+            this.txtIdentificadorPolitica.Location = new System.Drawing.Point(16, 267);
+            this.txtIdentificadorPolitica.Name = "txtIdentificadorPolitica";
+            this.txtIdentificadorPolitica.Size = new System.Drawing.Size(235, 20);
+            this.txtIdentificadorPolitica.TabIndex = 12;
+            this.txtIdentificadorPolitica.Text = "urn:oid:2.16.724.1.3.1.1.2.1.8";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(274, 251);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(165, 13);
+            this.label5.TabIndex = 13;
+            this.label5.Text = "Valor hash de la política (base64)";
+            // 
+            // txtHashPolitica
+            // 
+            this.txtHashPolitica.Location = new System.Drawing.Point(277, 266);
+            this.txtHashPolitica.Name = "txtHashPolitica";
+            this.txtHashPolitica.Size = new System.Drawing.Size(266, 20);
+            this.txtHashPolitica.TabIndex = 14;
+            this.txtHashPolitica.Text = "V8lVVNGDCPen6VELRD1Ja8HARFk=";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(15, 307);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(90, 13);
+            this.label6.TabIndex = 15;
+            this.label6.Text = "URI de la política";
+            // 
+            // txtURIPolitica
+            // 
+            this.txtURIPolitica.Location = new System.Drawing.Point(16, 323);
+            this.txtURIPolitica.Name = "txtURIPolitica";
+            this.txtURIPolitica.Size = new System.Drawing.Size(423, 20);
+            this.txtURIPolitica.TabIndex = 16;
+            this.txtURIPolitica.Text = "http://administracionelectronica.gob.es/es/ctt/politicafirma/politica_firma_AGE_v" +
+    "1_8.pdf";
+            // 
             // FrmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(630, 343);
+            this.ClientSize = new System.Drawing.Size(630, 428);
+            this.Controls.Add(this.txtURIPolitica);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.txtHashPolitica);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.txtIdentificadorPolitica);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.btnCoFirmar);
             this.Controls.Add(this.btnCargarFirma);
             this.Controls.Add(this.btnGuardarFirma);
             this.Controls.Add(this.btnXadesXL);
@@ -255,6 +331,13 @@
         private System.Windows.Forms.Button btnXadesXL;
         private System.Windows.Forms.Button btnGuardarFirma;
         private System.Windows.Forms.Button btnCargarFirma;
+        private System.Windows.Forms.Button btnCoFirmar;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox txtIdentificadorPolitica;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox txtHashPolitica;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox txtURIPolitica;
     }
 }
 
