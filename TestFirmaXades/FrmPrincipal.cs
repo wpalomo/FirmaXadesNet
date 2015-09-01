@@ -161,5 +161,18 @@ namespace TestFirmaXades
                 MessageBox.Show("Firma cargada correctamente.");
             }
         }
+
+        private void btnContraFirma_Click(object sender, EventArgs e)
+        {
+            _firmaXades.PolicyIdentifier = txtIdentificadorPolitica.Text;
+            _firmaXades.PolicyHash = txtHashPolitica.Text;
+            _firmaXades.PolicyUri = txtURIPolitica.Text;
+
+            _firmaXades.ContraFirma(_firmaXades.SeleccionarCertificado());
+
+            MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
     }
 }

@@ -333,6 +333,49 @@ namespace FirmaXadesNet
             _xadesSignedXml.AddReference(reference);
         }
 
+        private void ActualizarDocumento()
+        {
+            if (_xmlDocument == null)
+            {
+                _xmlDocument = new XmlDocument();
+            }
+
+            if (_xmlDocument.DocumentElement != null)
+            {
+                XmlNode xmlNode = _xmlDocument.SelectSingleNode("//*[@Id='" + _xadesSignedXml.Signature.Id + "']");
+
+                if (xmlNode != null)
+                {
+
+                    XmlNamespaceManager nm = new XmlNamespaceManager(_xmlDocument.NameTable);
+                    nm.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
+                    nm.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
+
+                    XmlNode xmlQPNode = xmlNode.SelectSingleNode("ds:Object/xades:QualifyingProperties", nm);
+                    XmlNode xmlUnsingedPropertiesNode = xmlNode.SelectSingleNode("ds:Object/xades:QualifyingProperties/xades:UnsignedProperties", nm);
+
+                    if (xmlUnsingedPropertiesNode != null)
+                    {
+                        xmlUnsingedPropertiesNode.InnerXml = _xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.GetXml().InnerXml;
+                    }
+                    else
+                    {
+                        xmlUnsingedPropertiesNode = _xmlDocument.ImportNode(_xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.GetXml(), true);
+                        xmlQPNode.AppendChild(xmlUnsingedPropertiesNode);
+                    }
+                        
+                }
+                else
+                {
+                    _xmlDocument.DocumentElement.AppendChild(_xadesSignedXml.GetXml());
+                }
+            }
+            else
+            {
+                _xmlDocument.LoadXml(_xadesSignedXml.GetXml().OuterXml);
+            }
+        }
+
         /// <summary>
         /// Realiza el proceso de firmado
         /// </summary>
@@ -363,31 +406,13 @@ namespace FirmaXadesNet
             InsertarInfoXades(_mimeType);
             ComputarFirma();
 
-            if (_xmlDocument == null)
-            {
-                _xmlDocument = new XmlDocument();
-            }
-
-            if (_xmlDocument.DocumentElement != null)
-            {
-                XmlNode _xmlNode = _xmlDocument.SelectSingleNode("//*[@Id='" + _xadesSignedXml.Signature.Id + "']");
-
-                if (_xmlNode != null)
-                {
-                    _xmlNode.InnerXml = _xadesSignedXml.GetXml().InnerXml;
-                }
-                else
-                {
-                    _xmlDocument.DocumentElement.AppendChild(_xadesSignedXml.GetXml());
-                }
-            }
-            else
-            {
-                _xmlDocument.LoadXml(_xadesSignedXml.GetXml().OuterXml);
-            }
+            ActualizarDocumento();
         }
 
-
+        /// <summary>
+        /// Añade una firma al documento
+        /// </summary>
+        /// <param name="certificadoFirma"></param>
         public void CoFirmar(X509Certificate2 certificadoFirma)
         {
             if (_xadesSignedXml == null)
@@ -427,6 +452,83 @@ namespace FirmaXadesNet
             _objectReference = refContenido.Id;
 
             Firmar(certificadoFirma);
+        }
+
+
+        /// <summary>
+        /// Realiza la contrafirma de la firma actualmente cargada
+        /// </summary>
+        /// <param name="certificadoFirma"></param>
+        public void ContraFirma(X509Certificate2 certificadoFirma)
+        {
+            string signatureId = "Signature-" + Guid.NewGuid().ToString();
+            
+            if (_xadesSignedXml == null)
+            {
+                throw new Exception("No hay ninguna firma XADES cargada previamente.");
+            }
+
+            if (certificadoFirma == null)
+            {
+                throw new Exception("Es necesario un certificado válido para la firma.");
+            }
+
+            XadesSignedXml counterSignature = new XadesSignedXml(_xmlDocument);
+            RSACryptoServiceProvider rsaKey = (RSACryptoServiceProvider)certificadoFirma.PrivateKey;
+            counterSignature.SigningKey = rsaKey;
+
+            Reference reference = new Reference();
+            reference.Uri = "#" + _xadesSignedXml.SignatureValueId;
+            reference.Id = "Reference-" + Guid.NewGuid().ToString();
+            reference.Type = "http://uri.etsi.org/01903#CountersignedSignature";
+            reference.AddTransform(new XmlDsigC14NTransform());
+            counterSignature.AddReference(reference);
+            _objectReference = reference.Id;
+
+            KeyInfo keyInfo = new KeyInfo();
+            keyInfo.Id = "KeyInfoId-" + signatureId;
+            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)certificadoFirma));
+            keyInfo.AddClause(new RSAKeyValue(rsaKey));
+            counterSignature.KeyInfo = keyInfo;
+
+            Reference referenceKeyInfo = new Reference();
+            referenceKeyInfo.Id = "ReferenceKeyInfo-" + signatureId;
+            referenceKeyInfo.Uri = "#KeyInfoId-" + signatureId;
+            counterSignature.AddReference(referenceKeyInfo);
+
+            counterSignature.Signature.Id = signatureId;
+            counterSignature.SignatureValueId = "SignatureValue-" + Guid.NewGuid().ToString();
+
+            XadesObject counterSignatureXadesObject = new XadesObject();
+            counterSignatureXadesObject.Id = "CounterSignatureXadesObject-" + Guid.NewGuid().ToString();
+            counterSignatureXadesObject.QualifyingProperties.Target = "#" + signatureId;
+            counterSignatureXadesObject.QualifyingProperties.SignedProperties.Id = "SignedProperties-" + signatureId;
+
+            InsertarPropiedadesFirma(counterSignatureXadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties,
+                counterSignatureXadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties,
+                counterSignatureXadesObject.QualifyingProperties.UnsignedProperties.UnsignedSignatureProperties,
+                "text/xml", certificadoFirma);
+
+            counterSignature.AddXadesObject(counterSignatureXadesObject);
+
+            counterSignature.ComputeSignature();
+
+            UnsignedProperties unsignedProperties = _xadesSignedXml.UnsignedProperties;
+            unsignedProperties.UnsignedSignatureProperties.CounterSignatureCollection.Add(counterSignature);
+            _xadesSignedXml.UnsignedProperties = unsignedProperties;
+
+            ActualizarDocumento();
+
+            _xadesSignedXml = new XadesSignedXml(_xmlDocument);
+            
+            XmlNode xmlNode = _xmlDocument.SelectSingleNode("//*[@Id='" + signatureId + "']");
+
+            _xadesSignedXml.LoadXml((XmlElement)xmlNode);
+
+            _certificate = certificadoFirma;
+
+            _chain = new X509Chain();
+            _chain.Build(_certificate);
         }
 
         /// <summary>
@@ -522,7 +624,7 @@ namespace FirmaXadesNet
                 xadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties,
                 xadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties,
                 xadesObject.QualifyingProperties.UnsignedProperties.UnsignedSignatureProperties,
-                mimeType);
+                mimeType, _certificate);
 
             _xadesSignedXml.AddXadesObject(xadesObject);
         }
@@ -549,7 +651,7 @@ namespace FirmaXadesNet
 
 
         private void InsertarPropiedadesFirma(SignedSignatureProperties signedSignatureProperties, SignedDataObjectProperties signedDataObjectProperties,
-                   UnsignedSignatureProperties unsignedSignatureProperties, string mimeType)
+                   UnsignedSignatureProperties unsignedSignatureProperties, string mimeType, X509Certificate2 certificado)
         {
             XmlDocument xmlDocument;
             Cert cert;
@@ -557,10 +659,10 @@ namespace FirmaXadesNet
             xmlDocument = new XmlDocument();
 
             cert = new Cert();
-            cert.IssuerSerial.X509IssuerName = NormalizarNombre(_certificate.IssuerName.Name);
-            cert.IssuerSerial.X509SerialNumber = HexToDecimal(_certificate.SerialNumber);
+            cert.IssuerSerial.X509IssuerName = NormalizarNombre(certificado.IssuerName.Name);
+            cert.IssuerSerial.X509SerialNumber = HexToDecimal(certificado.SerialNumber);
             cert.CertDigest.DigestMethod.Algorithm = SignedXml.XmlDsigSHA1Url;
-            cert.CertDigest.DigestValue = _certificate.GetCertHash();
+            cert.CertDigest.DigestValue = certificado.GetCertHash();
             signedSignatureProperties.SigningCertificate.CertCollection.Add(cert);
 
             if (!string.IsNullOrEmpty(_policyIdentifier))
@@ -638,6 +740,8 @@ namespace FirmaXadesNet
                 unsignedProperties.UnsignedSignatureProperties.SignatureTimeStampCollection.Add(signatureTimeStamp);
 
                 _xadesSignedXml.UnsignedProperties = unsignedProperties;
+
+                ActualizarDocumento();
             }
             catch (Exception ex)
             {
@@ -989,6 +1093,8 @@ namespace FirmaXadesNet
             _xadesSignedXml.UnsignedProperties = unsignedProperties;
 
             SellarEstadosCertificados();
+
+            ActualizarDocumento();
         }
 
         private void SellarEstadosCertificados()

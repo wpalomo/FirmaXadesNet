@@ -53,6 +53,7 @@
             this.txtHashPolitica = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.txtURIPolitica = new System.Windows.Forms.TextBox();
+            this.btnContraFirma = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -279,11 +280,22 @@
             this.txtURIPolitica.Text = "http://administracionelectronica.gob.es/es/ctt/politicafirma/politica_firma_AGE_v" +
     "1_8.pdf";
             // 
+            // btnContraFirma
+            // 
+            this.btnContraFirma.Location = new System.Drawing.Point(93, 399);
+            this.btnContraFirma.Name = "btnContraFirma";
+            this.btnContraFirma.Size = new System.Drawing.Size(75, 23);
+            this.btnContraFirma.TabIndex = 17;
+            this.btnContraFirma.Text = "ContraFirma";
+            this.btnContraFirma.UseVisualStyleBackColor = true;
+            this.btnContraFirma.Click += new System.EventHandler(this.btnContraFirma_Click);
+            // 
             // FrmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(630, 428);
+            this.ClientSize = new System.Drawing.Size(630, 436);
+            this.Controls.Add(this.btnContraFirma);
             this.Controls.Add(this.txtURIPolitica);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.txtHashPolitica);
@@ -338,6 +350,7 @@
         private System.Windows.Forms.TextBox txtHashPolitica;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtURIPolitica;
+        private System.Windows.Forms.Button btnContraFirma;
     }
 }
 

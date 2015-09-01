@@ -531,7 +531,7 @@ namespace Microsoft.Xades
 			{
 				foreach (XadesSignedXml xadesSignedXml in this.counterSignatureCollection)
 				{
-					bufferXmlElement = creationXmlDocument.CreateElement("CounterSignature", XadesSignedXml.XadesNamespaceUri);
+					bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "CounterSignature", XadesSignedXml.XadesNamespaceUri);
 					bufferXmlElement.AppendChild(creationXmlDocument.ImportNode(xadesSignedXml.GetXml(), true));
 					retVal.AppendChild(creationXmlDocument.ImportNode(bufferXmlElement, true));
 				}
