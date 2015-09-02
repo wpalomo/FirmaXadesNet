@@ -17,6 +17,8 @@ CARACTERÍSTICAS
 
 - Sellado de tiempo.
 
+- Soporte para co-firmas y contrafirmas.
+
 Adicionalmente permite cargar archivos de firma para su posterior ampliación a XADES-T o XADES-XL, con esta funcionalidad podremos hacer que nuestra aplicación de escritorio permita al usuario firmar con su certificado, y posteriormente podemos ampliar dicha firma mediante un servicio web en ASP.NET.
 
 Las pruebas han sido realizadas con el certificado del DNI-e y con la tarjeta criptográfica de la ACCV.
