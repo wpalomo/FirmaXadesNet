@@ -30,6 +30,7 @@ namespace Microsoft.Xades
 	public class TimeStamp
 	{
 		#region Private variables
+        private string id;
 		private string tagName;
 		private HashDataInfoCollection hashDataInfoCollection;
 		private EncapsulatedPKIData encapsulatedTimeStamp;
@@ -51,6 +52,18 @@ namespace Microsoft.Xades
 				this.tagName = value;
 			}
 		}
+
+        public string Id
+        {
+            get
+            {
+                return this.id;
+            }
+            set
+            {
+                this.id = value;
+            }
+        }
 
 		/// <summary>
 		/// A collection of hash data infos
@@ -173,6 +186,15 @@ namespace Microsoft.Xades
 				throw new ArgumentNullException("xmlElement");
 			}
 
+            if (xmlElement.HasAttribute("Id"))
+            {
+                this.id = xmlElement.GetAttribute("Id");
+            }
+            else
+            {
+                this.id = "";
+            }
+
 			xmlNamespaceManager = new XmlNamespaceManager(xmlElement.OwnerDocument.NameTable);
 			xmlNamespaceManager.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
 
@@ -238,7 +260,7 @@ namespace Microsoft.Xades
 			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, this.tagName, XadesSignedXml.XadesNamespaceUri);
             retVal.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
 
-            retVal.SetAttribute("Id", this.tagName + "Id");
+            retVal.SetAttribute("Id", this.Id);
 
           /*  XmlElement canonicalization = creationXmlDocument.CreateElement("CanonicalizationMethod", SignedXml.XmlDsigNamespaceUrl);
             canonicalization.SetAttribute("Algorithm", "http://www.w3.org/TR/2001/REC-xml-c14n-20010315");

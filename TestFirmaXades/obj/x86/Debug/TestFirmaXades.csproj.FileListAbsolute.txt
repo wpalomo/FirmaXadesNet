@@ -1,0 +1,13 @@
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\bin\Debug\TestFirmaXades.exe
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\bin\Debug\TestFirmaXades.pdb
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\bin\Debug\FirmaXadesNet.dll
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\bin\Debug\Microsoft.Xades.dll
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\bin\Debug\BouncyCastle.Crypto.dll
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\bin\Debug\FirmaXadesNet.pdb
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\bin\Debug\Microsoft.Xades.pdb
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\obj\x86\Debug\TestFirmaXades.csprojResolveAssemblyReference.cache
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\obj\x86\Debug\TestFirmaXades.FrmPrincipal.resources
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\obj\x86\Debug\TestFirmaXades.Properties.Resources.resources
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\obj\x86\Debug\TestFirmaXades.csproj.GenerateResource.Cache
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\obj\x86\Debug\TestFirmaXades.exe
+C:\Programacion\FirmaXadesNet-master\TestFirmaXades\obj\x86\Debug\TestFirmaXades.pdb

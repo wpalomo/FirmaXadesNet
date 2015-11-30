@@ -46,19 +46,17 @@ namespace FirmaXadesNet
         public static byte[] ComputeHashValueOfElementList(XmlElement signatureXmlElement, ArrayList elementXpaths)
         {
             XmlDocument xmlDocument;
-            XmlElement xmlComposed;
             XmlNamespaceManager xmlNamespaceManager;
             XmlNodeList searchXmlNodeList;
             XmlDsigC14NTransform xmlDsigC14NTransform;
-            MemoryStream canonicalizedStream = new MemoryStream();
-            SHA1 sha1Managed;
+            MemoryStream msResult = new MemoryStream();
             byte[] retVal;
+            UTF8Encoding encoding = new UTF8Encoding(false);
 
             xmlDocument = signatureXmlElement.OwnerDocument;
             xmlNamespaceManager = new XmlNamespaceManager(xmlDocument.NameTable);
             xmlNamespaceManager.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
             xmlNamespaceManager.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
-            xmlComposed = xmlDocument.CreateElement("Composed");
 
             // obtiene los namespaces del elemento raiz, necesarios para calcular el hash de una firma enveloped
             Dictionary<string, string> namespaces = new Dictionary<string, string>();
@@ -89,7 +87,13 @@ namespace FirmaXadesNet
                     {
                         XmlAttribute xadesNamespace = xmlDocument.CreateAttribute("xmlns:" + XadesSignedXml.XmlXadesPrefix);
                         xadesNamespace.Value = XadesSignedXml.XadesNamespaceUri;
-                        xmlNode.Attributes.Append(xadesNamespace);                                               
+                        xmlNode.Attributes.Append(xadesNamespace);
+                    }
+                    else
+                    {
+                        XmlAttribute xadesNamespace = xmlDocument.CreateAttribute("xmlns:" + XadesSignedXml.XmlDSigPrefix);
+                        xadesNamespace.Value = XadesSignedXml.XmlDsigNamespaceUrl;
+                        xmlNode.Attributes.Append(xadesNamespace);
                     }
 
                     foreach (var attr in namespaces)
@@ -99,31 +103,25 @@ namespace FirmaXadesNet
                         xmlNode.Attributes.Append(attrNamespace);  
                     }
 
-                    xmlComposed.AppendChild(xmlNode);
+                    byte[] buffer = encoding.GetBytes(xmlNode.OuterXml);
+                    
+                    using (MemoryStream ms = new MemoryStream(buffer))
+                    {
+                        xmlDsigC14NTransform = new XmlDsigC14NTransform();
+                        xmlDsigC14NTransform.LoadInput(ms);
+                        MemoryStream canonicalizedStream = (MemoryStream)xmlDsigC14NTransform.GetOutput(typeof(Stream));
+                        canonicalizedStream.Flush();
+                        canonicalizedStream.WriteTo(msResult);                    
+                    }
                 }
             }
 
+            using (SHA1 sha1 = SHA1.Create())
+            {
+                retVal = sha1.ComputeHash(msResult.ToArray());
+            }
 
-            MemoryStream memStream = new MemoryStream();
-            byte[] bytes = Encoding.UTF8.GetBytes(xmlComposed.OuterXml);
-            memStream.Write(bytes, 0, bytes.Length);
-            memStream.Seek(0, SeekOrigin.Begin);
-
-
-            xmlDsigC14NTransform = new XmlDsigC14NTransform(false);
-            xmlDsigC14NTransform.LoadInput(memStream);
-            canonicalizedStream = (MemoryStream)xmlDsigC14NTransform.GetOutput(typeof(Stream));
-
-            XmlDocument xmlFinal = new XmlDocument();
-            xmlFinal.Load(canonicalizedStream);
-            
-            sha1Managed = new SHA1Managed();
-            retVal = sha1Managed.ComputeHash(Encoding.UTF8.GetBytes(xmlFinal.DocumentElement.InnerXml));
-            canonicalizedStream.Close();
-            canonicalizedStream.Dispose();
-
-            memStream.Close();
-            memStream.Dispose();
+            msResult.Dispose();
 
             return retVal;
         }

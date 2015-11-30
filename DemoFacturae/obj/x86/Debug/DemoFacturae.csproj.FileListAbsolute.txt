@@ -1,0 +1,14 @@
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\Facturae.xml
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\DemoFacturae.exe
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\DemoFacturae.pdb
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\FirmaXadesNet.dll
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\Microsoft.Xades.dll
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\BouncyCastle.Crypto.dll
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\FirmaXadesNet.pdb
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\bin\Debug\Microsoft.Xades.pdb
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\obj\x86\Debug\DemoFacturae.FrmPrincipal.resources
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\obj\x86\Debug\DemoFacturae.Properties.Resources.resources
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\obj\x86\Debug\DemoFacturae.csproj.GenerateResource.Cache
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\obj\x86\Debug\DemoFacturae.exe
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\obj\x86\Debug\DemoFacturae.pdb
+C:\Programacion\FirmaXadesNet-master\DemoFacturae\obj\x86\Debug\DemoFacturae.csprojResolveAssemblyReference.cache

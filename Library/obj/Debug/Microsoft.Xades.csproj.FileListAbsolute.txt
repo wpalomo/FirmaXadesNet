@@ -1,0 +1,5 @@
+C:\Programacion\FirmaXadesNet-master\Library\bin\Debug\Microsoft.Xades.dll
+C:\Programacion\FirmaXadesNet-master\Library\bin\Debug\Microsoft.Xades.pdb
+C:\Programacion\FirmaXadesNet-master\Library\bin\Debug\XAdES.xml
+C:\Programacion\FirmaXadesNet-master\Library\obj\Debug\Microsoft.Xades.dll
+C:\Programacion\FirmaXadesNet-master\Library\obj\Debug\Microsoft.Xades.pdb

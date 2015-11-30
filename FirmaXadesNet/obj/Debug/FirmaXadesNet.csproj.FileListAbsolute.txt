@@ -1,0 +1,8 @@
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\bin\Debug\FirmaXadesNet.dll
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\bin\Debug\FirmaXadesNet.pdb
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\bin\Debug\BouncyCastle.Crypto.dll
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\bin\Debug\Microsoft.Xades.dll
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\bin\Debug\Microsoft.Xades.pdb
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\obj\Debug\FirmaXadesNet.csprojResolveAssemblyReference.cache
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\obj\Debug\FirmaXadesNet.dll
+C:\Programacion\FirmaXadesNet-master\FirmaXadesNet\obj\Debug\FirmaXadesNet.pdb
