@@ -70,11 +70,11 @@ namespace TestFirmaXades
                 string mimeType = "application/" + 
                     System.IO.Path.GetExtension(txtFichero.Text).ToLower().Replace(".", "");
 
-                _firmaXades.InsertarDocumentoInternallyDetached(txtFichero.Text, mimeType);
+                _firmaXades.InsertarFicheroInternallyDetached(txtFichero.Text, mimeType);
             }
             else if (rbExternallyDetached.Checked)
             {
-                _firmaXades.InsertarDocumentoExternallyDetached(txtFichero.Text);
+                _firmaXades.InsertarFicheroExternallyDetached(txtFichero.Text);
             }
             else if (rbEnveloped.Checked)
             {
@@ -157,9 +157,19 @@ namespace TestFirmaXades
         {
             if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                _firmaXades.CargarFirma(openFileDialog1.FileName);
-                MessageBox.Show("Firma cargada correctamente.");
-            }
+                var firmas = FirmaXades.CargarFirma(openFileDialog1.FileName);
+
+                FrmSeleccionarFirma frm = new FrmSeleccionarFirma(firmas);
+
+                if (frm.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    _firmaXades = frm.FirmaSeleccionada;
+                }
+                else
+                {
+                    MessageBox.Show("Debe seleccionar una firma.");
+                }
+            }  
         }
 
         private void btnContraFirma_Click(object sender, EventArgs e)

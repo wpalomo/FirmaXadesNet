@@ -196,7 +196,7 @@ namespace Microsoft.Xades
 			{
 				throw new CryptographicException("SigningTime missing");
 			}
-            this.signingTime = XmlConvert.ToDateTime(xmlNodeList.Item(0).InnerText, XmlDateTimeSerializationMode.Local);
+            this.signingTime = XmlConvert.ToDateTime(xmlNodeList.Item(0).InnerText, XmlDateTimeSerializationMode.Utc).ToLocalTime();
 
 			xmlNodeList = xmlElement.SelectNodes("xsd:SigningCertificate", xmlNamespaceManager);
 			if (xmlNodeList.Count == 0)

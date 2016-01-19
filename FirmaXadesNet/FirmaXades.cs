@@ -147,13 +147,32 @@ namespace FirmaXadesNet
         }
 
         /// <summary>
-        /// Devuelve el resultado de la firma.
+        /// Certificado empleado para la firma
         /// </summary>
-        public XmlDocument Firma
+        public X509Certificate2 Certificado
+        {
+            get
+            {
+                return _certificate;
+            }
+        }
+
+        /// <summary>
+        /// Devuelve el documento XML resultante
+        /// </summary>
+        public XmlDocument Documento
         {
             get
             {
                 return _xmlDocument;
+            }
+        }
+
+        public XadesSignedXml Propiedades
+        {
+            get
+            {
+                return _xadesSignedXml;
             }
         }
 
@@ -167,7 +186,7 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="contenido"></param>
         /// <param name="mimeType"></param>
-        public void InsertarDocumentoInternallyDetached(byte[] contenido, string mimeType)
+        public void InsertarFicheroInternallyDetached(byte[] contenido, string mimeType)
         {
             _xmlDocument = new XmlDocument();
 
@@ -224,7 +243,7 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="nombreFichero"></param>
         /// <param name="mimeType"></param>
-        public void InsertarDocumentoInternallyDetached(string nombreFichero, string mimeType)
+        public void InsertarFicheroInternallyDetached(string nombreFichero, string mimeType)
         {
             using (MemoryStream msContent = new MemoryStream())
             {
@@ -238,7 +257,7 @@ namespace FirmaXadesNet
                 }
                 fs.Close();
 
-                InsertarDocumentoInternallyDetached(msContent.ToArray(), mimeType);
+                InsertarFicheroInternallyDetached(msContent.ToArray(), mimeType);
             }
         }
 
@@ -246,7 +265,7 @@ namespace FirmaXadesNet
         /// Inserta un documento para generar una firma externally detached.
         /// </summary>
         /// <param name="nombreFichero"></param>
-        public void InsertarDocumentoExternallyDetached(string nombreFichero)
+        public void InsertarFicheroExternallyDetached(string nombreFichero)
         {
             Reference reference = new Reference();
 
@@ -326,7 +345,7 @@ namespace FirmaXadesNet
         /// Inserta un contenido XML para generar una firma enveloping.
         /// </summary>
         /// <param name="contenidoXML"></param>
-        public void InsertarDocumentoEnveloping(string contenidoXML)
+        public void InsertarFicheroEnveloping(string contenidoXML)
         {
             Reference reference = new Reference();
 
@@ -561,7 +580,7 @@ namespace FirmaXadesNet
             settings.Encoding = new UTF8Encoding();
             using (var writer = XmlWriter.Create(nombreFichero, settings))
             {
-                this.Firma.Save(writer);
+                this.Documento.Save(writer);
             }
         }
 
@@ -569,27 +588,40 @@ namespace FirmaXadesNet
         /// Carga un archivo de firma.
         /// </summary>
         /// <param name="nombreFichero"></param>
-        public void CargarFirma(string nombreFichero)
+        public static FirmaXades[] CargarFirma(string nombreFichero)
         {
-            _xmlDocument = new XmlDocument();
-            _xmlDocument.PreserveWhitespace = true;
-            _xmlDocument.Load(nombreFichero);
+            XmlDocument document = new XmlDocument();
+            document.PreserveWhitespace = true;
+            document.Load(nombreFichero);
 
-            _xadesSignedXml = new XadesSignedXml(_xmlDocument);
-            XmlNodeList signatureNodeList = _xmlDocument.GetElementsByTagName("Signature");
+            XmlNodeList signatureNodeList = document.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
+
             if (signatureNodeList.Count == 0)
             {
-                signatureNodeList = _xmlDocument.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
+                throw new Exception("No se ha encontrado ninguna firma.");
             }
 
-            _xadesSignedXml.LoadXml((XmlElement)signatureNodeList[0]);
+            List<FirmaXades> firmas = new List<FirmaXades>();
 
-            XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Data", SignedXml.XmlDsigNamespaceUrl)[0];
+            foreach (var signatureNode in signatureNodeList)
+            {
+                FirmaXades firma = new FirmaXades();
+                firma._xmlDocument = document;
 
-            _certificate = new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
+                firma._xadesSignedXml = new XadesSignedXml(firma._xmlDocument);
+                firma._xadesSignedXml.LoadXml((XmlElement)signatureNode);
 
-            _chain = new X509Chain();
-            _chain.Build(_certificate);
+                XmlNode keyXml = firma._xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Data", SignedXml.XmlDsigNamespaceUrl)[0];
+
+                firma._certificate = new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
+
+                firma._chain = new X509Chain();
+                firma._chain.Build(firma._certificate);
+
+                firmas.Add(firma);
+            }
+
+            return firmas.ToArray();
         }
 
         /// <summary>
