@@ -24,3 +24,5 @@ Adicionalmente permite cargar archivos de firma para su posterior ampliación a 
 Las pruebas han sido realizadas con el certificado del DNI-e y con la tarjeta criptográfica de la ACCV.
 
 La documentación se encuentra actualmente en fase de desarrollo, pero dentro de la solución se encuentra un proyecto con ejemplos de uso de la librería. El ejemplo incluido hace uso del servidor de sellado de tiempo de la ACCV.
+
+*** NOTA: esta librería únicamente soporta algoritmos SHA1, si necesita generar firmas usando SHA256 puede utilizar la versión de la librería para .NET Framework 4.5 que se encuentra disponible en: https://github.com/zinkpad/FirmaXadesNet45
