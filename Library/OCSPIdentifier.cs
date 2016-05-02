@@ -216,7 +216,11 @@ namespace Microsoft.Xades
 			if (this.producedAt != DateTime.MinValue)
 			{
 				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "ProducedAt", XadesSignedXml.XadesNamespaceUri);
-                bufferXmlElement.InnerText = this.producedAt.ToString("s");
+
+                DateTime truncatedDateTime = this.producedAt.AddTicks(-(this.producedAt.Ticks % TimeSpan.TicksPerSecond));
+
+                bufferXmlElement.InnerText = XmlConvert.ToString(truncatedDateTime, XmlDateTimeSerializationMode.Local);        
+
                 bufferXmlElement.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
 				retVal.AppendChild(bufferXmlElement);
 			}

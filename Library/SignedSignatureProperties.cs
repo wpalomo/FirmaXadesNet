@@ -196,7 +196,7 @@ namespace Microsoft.Xades
 			{
 				throw new CryptographicException("SigningTime missing");
 			}
-            this.signingTime = XmlConvert.ToDateTime(xmlNodeList.Item(0).InnerText, XmlDateTimeSerializationMode.Utc).ToLocalTime();
+            this.signingTime = XmlConvert.ToDateTime(xmlNodeList.Item(0).InnerText, XmlDateTimeSerializationMode.Local);
 
 			xmlNodeList = xmlElement.SelectNodes("xsd:SigningCertificate", xmlNamespaceManager);
 			if (xmlNodeList.Count == 0)
@@ -207,12 +207,11 @@ namespace Microsoft.Xades
 			this.signingCertificate.LoadXml((XmlElement)xmlNodeList.Item(0));
 
 			xmlNodeList = xmlElement.SelectNodes("xsd:SignaturePolicyIdentifier", xmlNamespaceManager);
-			if (xmlNodeList.Count == 0)
+			if (xmlNodeList.Count > 0)
 			{
-				throw new CryptographicException("SignaturePolicyIdentifier missing");
-			}
-			this.signaturePolicyIdentifier = new SignaturePolicyIdentifier();
-			this.signaturePolicyIdentifier.LoadXml((XmlElement)xmlNodeList.Item(0));
+                this.signaturePolicyIdentifier = new SignaturePolicyIdentifier();
+                this.signaturePolicyIdentifier.LoadXml((XmlElement)xmlNodeList.Item(0));
+            }
 
 			xmlNodeList = xmlElement.SelectNodes("xsd:SignatureProductionPlace", xmlNamespaceManager);
 			if (xmlNodeList.Count != 0)
@@ -254,8 +253,13 @@ namespace Microsoft.Xades
 			{ //SigningTime should be available
 				this.signingTime = DateTime.Now;
 			}
+
 			bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "SigningTime", XadesSignedXml.XadesNamespaceUri);
-            bufferXmlElement.InnerText = Convert.ToString(this.signingTime.ToUniversalTime().ToString("s")); // ISO 8601 format as required in http://www.w3.org/TR/xmlschema-2/#dateTime 
+                                   
+            DateTime truncatedDateTime = this.signingTime.AddTicks(-(this.signingTime.Ticks % TimeSpan.TicksPerSecond));
+
+            bufferXmlElement.InnerText = XmlConvert.ToString(truncatedDateTime, XmlDateTimeSerializationMode.Local);            
+
 			retVal.AppendChild(bufferXmlElement);
 
 			if (this.signingCertificate != null && this.signingCertificate.HasChanged())

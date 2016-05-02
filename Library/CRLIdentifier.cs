@@ -208,7 +208,11 @@ namespace Microsoft.Xades
 			if (this.issueTime != DateTime.MinValue)
 			{
 				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "IssueTime", XadesSignedXml.XadesNamespaceUri);
-				bufferXmlElement.InnerText = Convert.ToString(this.issueTime.ToString("s"));
+
+                DateTime truncatedDateTime = this.issueTime.AddTicks(-(this.issueTime.Ticks % TimeSpan.TicksPerSecond));
+
+                bufferXmlElement.InnerText = XmlConvert.ToString(truncatedDateTime, XmlDateTimeSerializationMode.Local);        
+
 				retVal.AppendChild(bufferXmlElement);
 			}
 

@@ -86,9 +86,13 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Security.Cryptography, Version=1.7.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Security.Cryptography.1.7.2\lib\net35\Security.Cryptography.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
@@ -298,6 +302,8 @@
     <Compile Include="RevocationValues.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="RSAPKCS1SHA256SignatureDescription.cs" />
+    <Compile Include="RSAPKCS1SHA512SignatureDescription.cs" />
     <Compile Include="SignaturePolicyId.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -378,6 +384,7 @@
     </Compile>
     <EmbeddedResource Include="xmldsig-core-schema.xsd" />
     <None Include="Microsoft.Xades.snk" />
+    <None Include="packages.config" />
     <None Include="XAdES.xsd">
       <SubType>Designer</SubType>
     </None>

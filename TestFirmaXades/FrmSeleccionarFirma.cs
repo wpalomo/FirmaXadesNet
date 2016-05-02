@@ -31,8 +31,8 @@ namespace TestFirmaXades
             foreach (var firma in firmas)
             {
                 string textoFirma = string.Format("{0} - {1}",
-                    firma.Propiedades.XadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties.SigningTime,
-                    firma.Certificado.Subject);
+                    firma.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties.SigningTime,
+                    firma.Certificate.Subject);
 
                 lstFirmas.Items.Add(textoFirma);
             }

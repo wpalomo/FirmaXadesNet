@@ -46,17 +46,17 @@ namespace DemoFacturae
             FirmaXades firmaXades = new FirmaXades();
             string ficheroFactura = Application.StartupPath + "\\Facturae.xml";
 
-            firmaXades.InsertarFicheroEnveloped(ficheroFactura);
+            firmaXades.SetContentEnveloped(ficheroFactura);
             
             // Política de firma de factura-e 3.1
             firmaXades.PolicyIdentifier = "http://www.facturae.es/politica_de_firma_formato_facturae/politica_de_firma_formato_facturae_v3_1.pdf";
             firmaXades.PolicyHash = "Ohixl6upD6av8N7pEvDABhEL6hM=";
 
-            firmaXades.Firmar(firmaXades.SeleccionarCertificado());
+            firmaXades.Sign(firmaXades.SelectCertificate());
 
             if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                firmaXades.GuardarFirma(saveFileDialog1.FileName);
+                firmaXades.Save(saveFileDialog1.FileName);
                 MessageBox.Show("Fichero guardado correctamente.");
             }
         }
