@@ -232,6 +232,19 @@ namespace FirmaXadesNet.Upgraders
             return false;
         }
 
+        private long? GetCRLNumber(Org.BouncyCastle.X509.X509Crl crlEntry)
+        {
+            Asn1OctetString extValue = crlEntry.GetExtensionValue(Org.BouncyCastle.Asn1.X509.X509Extensions.CrlNumber);
+
+            if (extValue != null)
+            {
+                Asn1Object asn1Value = Org.BouncyCastle.X509.Extension.X509ExtensionUtilities.FromExtensionValue(extValue);
+
+                return DerInteger.GetInstance(asn1Value).PositiveValue.LongValue;
+            }
+
+            return null;
+        }
 
         private bool ValidateCertificateByCRL(UnsignedProperties unsignedProperties, X509Certificate2 certificate, X509Certificate2 issuer)
         {
@@ -254,6 +267,12 @@ namespace FirmaXadesNet.Upgraders
                             crlRef.CRLIdentifier.UriAttribute = "#" + idCrlValue;
                             crlRef.CRLIdentifier.Issuer = issuer.Subject;
                             crlRef.CRLIdentifier.IssueTime = crlEntry.ThisUpdate.ToLocalTime();
+
+                            var crlNumber = GetCRLNumber(crlEntry);
+                            if (crlNumber.HasValue)
+                            {
+                                crlRef.CRLIdentifier.Number = crlNumber.Value;
+                            }
 
                             byte[] crlEncoded = crlEntry.GetEncoded();
                             DigestUtil.SetCertDigest(crlEncoded, _firma.RefsDigestMethod, crlRef.CertDigest);
