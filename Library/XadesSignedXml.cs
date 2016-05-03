@@ -1573,26 +1573,13 @@ namespace Microsoft.Xades
 
             list2.Sort((IComparer)comparer);
 
-            //CanonicalXmlNodeList refList = new CanonicalXmlNodeList();
             Type CanonicalXmlNodeList_Type = System_Security_Assembly.GetType("System.Security.Cryptography.Xml.CanonicalXmlNodeList");
             ConstructorInfo CanonicalXmlNodeList_Constructor = CanonicalXmlNodeList_Type.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { }, null);
+
+            // refList is a list of elements that might be targets of references
             Object refList = CanonicalXmlNodeList_Constructor.Invoke(null);
-            //
 
-            //
             MethodInfo CanonicalXmlNodeList_Add = CanonicalXmlNodeList_Type.GetMethod("Add", BindingFlags.Public | BindingFlags.Instance);
-            //
-
-
-            foreach (DataObject obj2 in this.m_signature.ObjectList)
-            {
-                //refList.Add(obj2.GetXml());
-                XmlElement xml = obj2.GetXml();
-                SetPrefix(XmlDSigPrefix, xml); // <---
-
-                CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xml });
-                //
-            }
 
             //
             FieldInfo SignedXml_m_containingDocument = SignedXml_Type.GetField("m_containingDocument", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -1609,8 +1596,19 @@ namespace Microsoft.Xades
 
             var signatureParentNodeNameSpaces = GetAllNamespaces(GetSignatureElement());
 
+            if (addXadesNamespace)
+            {
+                var attr = signatureDocument.CreateAttribute("xmlns:xades");
+                attr.Value = XadesSignedXml.XadesNamespaceUri;
+
+                signatureParentNodeNameSpaces.Add(attr);
+            }
+
             foreach (Reference reference2 in list2)
             {
+                XmlDocument xmlDoc = null;
+                bool addSignatureNamespaces = false;
+
                 if (reference2.DigestMethod == null)
                 {
                     reference2.DigestMethod = "http://www.w3.org/2000/09/xmldsig#sha1";
@@ -1621,89 +1619,83 @@ namespace Microsoft.Xades
                     reference2.Type = reference2.Type.Replace("/v1.3.2", "");
                 }
 
-                if (addXadesNamespace)
-                {
-                    var attr = signatureDocument.CreateAttribute("xmlns:xades");
-                    attr.Value = XadesSignedXml.XadesNamespaceUri;
-
-                    signatureParentNodeNameSpaces.Add(attr);
-                }
-
                 if (reference2.Uri.StartsWith("#KeyInfoId-"))
                 {
-                    XmlElement xml = this.KeyInfo.GetXml();
-                    XmlDocument doc = new XmlDocument();
-                    SetPrefix(XmlDSigPrefix, xml); // <---                   
+                    XmlElement keyInfoXml = this.KeyInfo.GetXml();
+                    SetPrefix(XmlDSigPrefix, keyInfoXml);
 
-                    doc.LoadXml(xml.OuterXml);
+                    xmlDoc = new XmlDocument();
+                    xmlDoc.LoadXml(keyInfoXml.OuterXml);
 
-                    foreach (XmlAttribute attr in signatureParentNodeNameSpaces)
-                    {
-                        XmlAttribute newAttr = doc.CreateAttribute(attr.Name);
-                        newAttr.Value = attr.Value;
-
-                        doc.DocumentElement.Attributes.Append(newAttr);
-                    }
-
-                    CanonicalXmlNodeList_Add.Invoke(refList, new object[] { doc.DocumentElement });
-
-                    Reference_UpdateHashValue.Invoke(reference2, new object[] { doc, refList });
-
+                    addSignatureNamespaces = true;
                 }
-                else if (reference2.Uri.StartsWith("#SignedProperties-") ||
-                    reference2.Uri.Contains("DataObject"))
+                else if (reference2.Type == "http://uri.etsi.org/01903#SignedProperties")
                 {
-                    XmlDocument doc = new XmlDocument();
-                    XmlElement docElement = doc.CreateElement("document");
+                    xmlDoc = (XmlDocument)cachedXadesObjectDocument.Clone();
 
-                    foreach (DataObject obj2 in this.m_signature.ObjectList)
+                    addSignatureNamespaces = true;
+                }
+                else if (reference2.Type == "http://www.w3.org/2000/09/xmldsig#Object")
+                {
+                    string dataObjectId = reference2.Uri.Substring(1);
+                    XmlElement dataObjectXml = null;
+
+                    foreach (DataObject dataObject in this.m_signature.ObjectList)
                     {
-                        XmlElement element = obj2.GetXml();
-                        SetPrefix(XmlDSigPrefix, element);
-
-                        if (reference2.Uri.StartsWith("#SignedProperties-"))
+                        if (dataObjectId == dataObject.Id)
                         {
-                            XmlAttribute xadesNamespace = element.OwnerDocument.CreateAttribute("xmlns:xades");
-                            xadesNamespace.Value = XadesSignedXml.XadesNamespaceUri;
-
-                            element.Attributes.Append(xadesNamespace);
+                            dataObjectXml = dataObject.GetXml();
+                            break;
                         }
-
-                        foreach (XmlAttribute attr in signatureParentNodeNameSpaces)
-                        {
-                            XmlAttribute newAttr = element.OwnerDocument.CreateAttribute(attr.Name);
-                            newAttr.Value = attr.Value;
-
-                            element.Attributes.Append(newAttr);
-                        }
-
-                        XmlNode importedElement = doc.ImportNode(element, true);
-                        docElement.AppendChild(importedElement);
                     }
 
-                    doc.AppendChild(docElement);
+                    // If no DataObject found, search on document
+                    if (dataObjectXml == null)
+                    {
+                        dataObjectXml = GetIdElement(this.signatureDocument, dataObjectId);
+                    }
 
-                    CanonicalXmlNodeList_Add.Invoke(refList, new object[] { (XmlElement)doc.ChildNodes[0] });
+                    if (dataObjectXml != null)
+                    {
+                        SetPrefix(XmlDSigPrefix, dataObjectXml);
 
-                    Reference_UpdateHashValue.Invoke(reference2, new object[] { doc, refList });
+                        xmlDoc = new XmlDocument();
+                        xmlDoc.LoadXml(dataObjectXml.OuterXml);
+                    }
+                    else
+                    {
+                        throw new Exception("No reference target found");
+                    }
+
+                    addSignatureNamespaces = true;
                 }
                 else
                 {
-                    Reference_UpdateHashValue.Invoke(reference2, new object[] { m_containingDocument, refList });
+                    xmlDoc = (XmlDocument)m_containingDocument;
                 }
 
+
+                if (addSignatureNamespaces)
+                {
+                    foreach (XmlAttribute attr in signatureParentNodeNameSpaces)
+                    {
+                        XmlAttribute newAttr = xmlDoc.CreateAttribute(attr.Name);
+                        newAttr.Value = attr.Value;
+
+                        xmlDoc.DocumentElement.Attributes.Append(newAttr);
+                    }
+                }
+
+                CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xmlDoc.DocumentElement });
+
+                Reference_UpdateHashValue.Invoke(reference2, new object[] { xmlDoc, refList });
 
                 if (reference2.Id != null)
                 {
                     XmlElement xml = reference2.GetXml();
 
-                    SetPrefix(XmlDSigPrefix, xml); // <---
-
-                    CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xml });
+                    SetPrefix(XmlDSigPrefix, xml);
                 }
-
-                // 
-
             }
         }
 

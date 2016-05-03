@@ -612,6 +612,9 @@ namespace FirmaXadesNet
             reference.Uri = "#" + dataObjectId;
             reference.Type = SignedXml.XmlDsigNamespaceUrl + "Object";
 
+            XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
+            reference.AddTransform(transform);
+
             _objectReference = reference.Id;
             _mimeType = "text/xml";
 
@@ -657,6 +660,9 @@ namespace FirmaXadesNet
 
             UpdateDocument();
 
+            XmlNode xmlNode = _document.SelectSingleNode("//*[@Id='" + _signatureId + "']");
+            _xadesSignedXml = new XadesSignedXml(_document);
+            _xadesSignedXml.LoadXml((XmlElement)xmlNode);
         }
 
         /// <summary>
@@ -701,7 +707,16 @@ namespace FirmaXadesNet
 
             refContent.Id = "Reference-" + Guid.NewGuid().ToString();
             _xadesSignedXml.AddReference(refContent);
-            _xadesSignedXml.SignatureNodeDestination = (XmlElement)destination;
+
+            if (destination.NodeType != XmlNodeType.Document)
+            {
+                _xadesSignedXml.SignatureNodeDestination = (XmlElement)destination;
+            }
+            else
+            {
+                _xadesSignedXml.SignatureNodeDestination = ((XmlDocument)destination).DocumentElement;
+            }
+
             _objectReference = refContent.Id;
 
             Sign(certificate, signMethod);
@@ -1108,7 +1123,13 @@ namespace FirmaXadesNet
 
             if (_rsaKey != null &&
                 key.CspKeyContainerInfo.UniqueKeyContainerName == _rsaKey.CspKeyContainerInfo.UniqueKeyContainerName)
+            {
                 return;
+            }
+            else if (_rsaKey != null && _disposeCryptoProvider)
+            {
+                _rsaKey.Clear();
+            }
 
             if (key.CspKeyContainerInfo.ProviderName == "Microsoft Strong Cryptographic Provider" ||
                 key.CspKeyContainerInfo.ProviderName == "Microsoft Enhanced Cryptographic Provider v1.0" ||
