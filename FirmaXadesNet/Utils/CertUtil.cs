@@ -2,7 +2,7 @@
 // CertUtil.cs
 //
 // FirmaXadesNet - Librería para la generación de firmas XADES
-// Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Concejalía de Urbanismo de Cartagena
+// Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the +terms of the GNU General Public License as published by
@@ -17,11 +17,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/. 
 //
-// Contact info: J. Arturo Aguado
-// Email: informatica@gemuc.es
+// E-Mail: informatica@gemuc.es
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
+using Org.BouncyCastle.Crypto.Parameters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,14 +34,17 @@ namespace FirmaXadesNet.Utils
     {
         #region Public methods
 
-        public static X509Chain GetCertChain(X509Certificate2 certificate)
+        public static X509Chain GetCertChain(X509Certificate2 certificate, X509Certificate2[] certificates = null)
         {
             X509Chain chain = new X509Chain();
 
-            chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain;
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-            chain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 30);
-            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreWrongUsage;
+
+            if (certificates != null)
+            {
+                chain.ChainPolicy.ExtraStore.AddRange(certificates);
+            }
 
             if (!chain.Build(certificate))
             {
@@ -49,6 +52,11 @@ namespace FirmaXadesNet.Utils
             }
 
             return chain;
+        }
+
+        public static Org.BouncyCastle.X509.X509Certificate ConvertToX509Certificate(X509Certificate2 cert)
+        {
+            return Org.BouncyCastle.Security.DotNetUtilities.FromX509Certificate(cert);
         }
 
         public static string HexToDecimal(string hex)

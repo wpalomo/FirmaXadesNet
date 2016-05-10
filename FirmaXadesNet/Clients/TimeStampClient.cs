@@ -2,7 +2,7 @@
 // TimeStampClient.cs
 //
 // FirmaXadesNet - Librería para la generación de firmas XADES
-// Copyright (C) 2014 Dpto. de Nuevas Tecnologías de la Concejalía de Urbanismo de Cartagena
+// Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the +terms of the GNU General Public License as published by
@@ -17,8 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/. 
 //
-// Contact info: J. Arturo Aguado
-// Email: informatica@gemuc.es
+// E-Mail: informatica@gemuc.es
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -43,14 +42,30 @@ namespace FirmaXadesNet.Clients
         /// </summary>
         /// <param name="url"></param>
         /// <param name="hash"></param>
+        /// <param name="digestMethod"></param>
         /// <param name="certReq"></param>
         /// <returns></returns>
-        public static byte[] GetTimeStamp(string url, byte[] hash, bool certReq)
+        public static byte[] GetTimeStamp(string url, byte[] hash, DigestMethod digestMethod, bool certReq)
         {
+            string digestAlg;
+            
             TimeStampRequestGenerator tsrq = new TimeStampRequestGenerator();
             tsrq.SetCertReq(certReq);
 
-            TimeStampRequest tsr = tsrq.Generate(TspAlgorithms.Sha1, hash, BigInteger.ValueOf(100));
+            if (digestMethod == DigestMethod.SHA1)
+            {
+                digestAlg = TspAlgorithms.Sha1;
+            }
+            else if (digestMethod == DigestMethod.SHA256)
+            {
+                digestAlg = TspAlgorithms.Sha256;
+            }
+            else
+            {
+                digestAlg = TspAlgorithms.Sha512;
+            }
+
+            TimeStampRequest tsr = tsrq.Generate(digestAlg, hash, BigInteger.ValueOf(100));
             byte[] data = tsr.GetEncoded();
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);

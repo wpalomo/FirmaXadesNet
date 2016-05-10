@@ -2,7 +2,7 @@
 // XadesUpgrader.cs
 //
 // FirmaXadesNet - Librería para la generación de firmas XADES
-// Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Concejalía de Urbanismo de Cartagena
+// Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the +terms of the GNU General Public License as published by
@@ -17,8 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/. 
 //
-// Contact info: J. Arturo Aguado
-// Email: informatica@gemuc.es
+// E-Mail: informatica@gemuc.es
 // 
 // --------------------------------------------------------------------------------------------------------------------
 

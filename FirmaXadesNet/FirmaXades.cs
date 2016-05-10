@@ -2,7 +2,7 @@
 // FirmaXades.cs
 //
 // FirmaXadesNet - Librería para la generación de firmas XADES
-// Copyright (C) 2014 Dpto. de Nuevas Tecnologías de la Concejalía de Urbanismo de Cartagena
+// Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the +terms of the GNU General Public License as published by
@@ -17,8 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/. 
 //
-// Contact info: J. Arturo Aguado
-// Email: informatica@gemuc.es
+// E-Mail: informatica@gemuc.es
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -619,6 +618,8 @@ namespace FirmaXadesNet
             _mimeType = "text/xml";
 
             _xadesSignedXml.AddReference(reference);
+
+            _document = null;
         }
 
 
@@ -641,8 +642,16 @@ namespace FirmaXadesNet
                 this.SignMethod = signMethod.Value;
             }
 
-            _signatureId = "Signature-" + Guid.NewGuid().ToString();
-            _signatureValueId = "SignatureValue-" + Guid.NewGuid().ToString();
+            if (!string.IsNullOrEmpty(_signatureId) && _document != null &&
+                _document.SelectSingleNode("//*[@Id='" + _signatureId + "']") != null)
+            {
+                throw new Exception("El documento ya ha sido firmado, debe seleccionar otro método de firma.");
+            }
+
+            if (string.IsNullOrEmpty(_signatureId))
+            {
+                SetSignatureId();
+            }
 
             _signCertificate = certificate;
 
@@ -719,6 +728,8 @@ namespace FirmaXadesNet
 
             _objectReference = refContent.Id;
 
+            SetSignatureId();
+
             Sign(certificate, signMethod);
         }
 
@@ -730,7 +741,7 @@ namespace FirmaXadesNet
         /// <param name="signMethod"></param>
         public void CounterSign(X509Certificate2 certificate, SignMethod? signMethod = null)
         {
-            string signatureId = "Signature-" + Guid.NewGuid().ToString();
+            SetSignatureId();
 
             if (_xadesSignedXml == null)
             {
@@ -764,23 +775,23 @@ namespace FirmaXadesNet
             _objectReference = reference.Id;
 
             KeyInfo keyInfo = new KeyInfo();
-            keyInfo.Id = "KeyInfoId-" + signatureId;
+            keyInfo.Id = "KeyInfoId-" + _signatureId;
             keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)_signCertificate));
             keyInfo.AddClause(new RSAKeyValue((RSA)_rsaKey));
             counterSignature.KeyInfo = keyInfo;
 
             Reference referenceKeyInfo = new Reference();
-            referenceKeyInfo.Id = "ReferenceKeyInfo-" + signatureId;
-            referenceKeyInfo.Uri = "#KeyInfoId-" + signatureId;
+            referenceKeyInfo.Id = "ReferenceKeyInfo-" + _signatureId;
+            referenceKeyInfo.Uri = "#KeyInfoId-" + _signatureId;
             counterSignature.AddReference(referenceKeyInfo);
 
-            counterSignature.Signature.Id = signatureId;
-            counterSignature.SignatureValueId = "SignatureValue-" + Guid.NewGuid().ToString();
+            counterSignature.Signature.Id = _signatureId;
+            counterSignature.SignatureValueId = _signatureValueId;
 
             XadesObject counterSignatureXadesObject = new XadesObject();
             counterSignatureXadesObject.Id = "CounterSignatureXadesObject-" + Guid.NewGuid().ToString();
-            counterSignatureXadesObject.QualifyingProperties.Target = "#" + signatureId;
-            counterSignatureXadesObject.QualifyingProperties.SignedProperties.Id = "SignedProperties-" + signatureId;
+            counterSignatureXadesObject.QualifyingProperties.Target = "#" + _signatureId;
+            counterSignatureXadesObject.QualifyingProperties.SignedProperties.Id = "SignedProperties-" + _signatureId;
 
             AddSignatureProperties(counterSignatureXadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties,
                 counterSignatureXadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties,
@@ -805,7 +816,7 @@ namespace FirmaXadesNet
 
             _xadesSignedXml = new XadesSignedXml(_document);
 
-            XmlNode xmlNode = _document.SelectSingleNode("//*[@Id='" + signatureId + "']");
+            XmlNode xmlNode = _document.SelectSingleNode("//*[@Id='" + _signatureId + "']");
 
             _xadesSignedXml.LoadXml((XmlElement)xmlNode);
         }
@@ -852,6 +863,18 @@ namespace FirmaXadesNet
             return Load(xmlDocument);
         }
 
+        /// <summary>
+        /// Carga un archivo de firma.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        public static FirmaXades[] Load(string fileName)
+        {
+            using (FileStream fs = new FileStream(fileName, FileMode.Open))
+            {
+                return Load(fs);
+            }
+        }
 
         /// <summary>
         /// Carga un archivo de firma.
@@ -974,13 +997,25 @@ namespace FirmaXadesNet
         {
             if (_disposeCryptoProvider && _rsaKey != null)
             {
-                _rsaKey.Clear();                
+                _rsaKey.Clear();
             }
         }
 
         #endregion
 
         #region Private methods
+
+
+        /// <summary>
+        /// Establece el identificador para la firma
+        /// </summary>
+        private void SetSignatureId()
+        {
+            string id = Guid.NewGuid().ToString();
+
+            _signatureId = "Signature-" + id;
+            _signatureValueId = "SignatureValue-" + id;
+        }
 
         /// <summary>
         /// Construye el documento enveloped
@@ -1050,28 +1085,15 @@ namespace FirmaXadesNet
                 {
                     XmlElement xmlSigned = _xadesSignedXml.GetXml();
 
-                    MemoryStream canonicalizedStream;
-                    XmlDsigC14NTransform xmlDsigC14NTransform;
-                    UTF8Encoding encoding = new UTF8Encoding(false);
-                    byte[] buffer = encoding.GetBytes(xmlSigned.OuterXml);
-
-                    using (MemoryStream ms = new MemoryStream(buffer))
-                    {
-                        xmlDsigC14NTransform = new XmlDsigC14NTransform();
-                        xmlDsigC14NTransform.LoadInput(ms);
-                        canonicalizedStream = (MemoryStream)xmlDsigC14NTransform.GetOutput(typeof(Stream));
-                        canonicalizedStream.Flush();
-                    }
+                    byte[] canonicalizedElement = XMLUtil.ApplyTransform(xmlSigned, new XmlDsigC14NTransform());
 
                     XmlDocument doc = new XmlDocument();
                     doc.PreserveWhitespace = true;
-                    doc.Load(canonicalizedStream);
+                    doc.LoadXml(Encoding.UTF8.GetString(canonicalizedElement));
 
                     XmlNode canonSignature = _document.ImportNode(doc.DocumentElement, true);
 
                     _xadesSignedXml.GetSignatureElement().AppendChild(canonSignature);
-
-                    canonicalizedStream.Dispose();
                 }
             }
             else
@@ -1130,6 +1152,7 @@ namespace FirmaXadesNet
             {
                 _rsaKey.Clear();
             }
+
 
             if (key.CspKeyContainerInfo.ProviderName == "Microsoft Strong Cryptographic Provider" ||
                 key.CspKeyContainerInfo.ProviderName == "Microsoft Enhanced Cryptographic Provider v1.0" ||
