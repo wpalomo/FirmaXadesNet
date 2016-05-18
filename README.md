@@ -20,3 +20,5 @@ CARACTERÍSTICAS
 - Soporte para algoritmos SHA1, SHA256 y SHA512.
 
 Dentro de la solución se encuentra un proyecto con ejemplos de uso de la librería. Algunos de los ejemplos hacen uso del servidor de sellado de tiempo de la ACCV.
+
+**IMPORTANTE:** el repositorio ha sido migrado al Centro de Transferencia de Tecnología - Forja CTT, la nueva dirección es https://github.com/ctt-gob-es/FirmaXadesNet
